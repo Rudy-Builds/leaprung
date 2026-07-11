@@ -1,0 +1,14 @@
+# Dependencies
+node_modules
+
+# Build output
+dist
+dist-ssr
+
+# Local / editor / OS
+*.local
+.vite
+.DS_Store
+.idea
+.vscode
+*.log
