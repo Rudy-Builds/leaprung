@@ -1,13 +1,14 @@
-import { useCallback, useMemo, useReducer } from 'react'
+import { useCallback, useEffect, useMemo, useReducer } from 'react'
 import { isLegalMove, computeStars } from '../game/rules.js'
 import { getSynonyms } from '../game/synonyms.js'
 import { moveCapFor } from '../game/puzzle.js'
+import { defaultStorage } from './storage.js'
 
 // All mutable game state lives here. The reducer is pure; validation happens in
 // the action creators (which close over the dictionary + synonym map) so the
 // reducer only ever receives already-legal moves or a rejection message.
 
-function makeInitialState(puzzle) {
+function freshState(puzzle) {
   return {
     current: puzzle.start,
     path: [puzzle.start],
@@ -18,6 +19,28 @@ function makeInitialState(puzzle) {
     stars: null,
     message: null,
   }
+}
+
+// useReducer's lazy initialiser: rehydrating here rather than in an effect means
+// the first render is already correct, so a finished player never sees a
+// playable board flash before the result modal replaces it.
+function makeInitialState({ puzzle, saved }) {
+  // saved.path[0] guards the seam: if the schedule were ever rebuilt under a
+  // player mid-game, yesterday's ladder wouldn't start where today's does, and
+  // rehydrating it would strand them on a puzzle that no longer exists.
+  if (saved?.path?.length && saved.path[0] === puzzle.start) {
+    return {
+      current: saved.path[saved.path.length - 1],
+      path: saved.path,
+      movesUsed: saved.movesUsed,
+      leapsRemaining: saved.leapsRemaining,
+      leapsUsed: saved.leapsUsed,
+      status: saved.status,
+      stars: saved.stars,
+      message: null, // transient — never restored
+    }
+  }
+  return freshState(puzzle)
 }
 
 function reducer(state, action) {
@@ -56,15 +79,25 @@ function reducer(state, action) {
     case 'CLEAR_MESSAGE':
       return { ...state, message: null }
     case 'RESET':
-      return makeInitialState(action.puzzle)
+      return freshState(action.puzzle)
     default:
       return state
   }
 }
 
-export function useGame(puzzle, dictSet, synMap) {
-  const [state, dispatch] = useReducer(reducer, puzzle, makeInitialState)
+export function useGame(puzzle, dictSet, synMap, { dayNumber, storage = defaultStorage } = {}) {
+  const [state, dispatch] = useReducer(
+    reducer,
+    { puzzle, saved: dayNumber == null ? null : storage.load(dayNumber) },
+    makeInitialState,
+  )
   const moveCap = moveCapFor(puzzle.par)
+
+  // Write through on every change, not just on finish — see storage.js.
+  useEffect(() => {
+    if (dayNumber == null) return
+    storage.save(dayNumber, state)
+  }, [state, dayNumber, storage])
 
   // Leap options offered for the current word (empty once tokens run out).
   const leapOptions = useMemo(() => {
@@ -115,7 +148,15 @@ export function useGame(puzzle, dictSet, synMap) {
   )
 
   const clearMessage = useCallback(() => dispatch({ type: 'CLEAR_MESSAGE' }), [])
-  const reset = useCallback(() => dispatch({ type: 'RESET', puzzle }), [puzzle])
+
+  // Under one-play-per-day this is the cheat button, so it is not wired to any
+  // shipping UI — "Play again" is gone. It survives as a dev-only escape hatch
+  // because without it the reducer can't be exercised by hand.
+  const reset = useCallback(() => {
+    if (!import.meta.env.DEV) return
+    if (dayNumber != null) storage.clear()
+    dispatch({ type: 'RESET', puzzle })
+  }, [puzzle, dayNumber, storage])
 
   return {
     ...state,

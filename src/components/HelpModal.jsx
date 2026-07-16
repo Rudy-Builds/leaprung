@@ -1,9 +1,8 @@
 import React from 'react'
+import { EXAMPLE_LADDER as EXAMPLE } from '../game/example.js'
 
-// Deliberately NOT this puzzle's ladder — KIND · FIND · FINE · FIVE · GIVE is
-// the literal 3-star line, so using the real thing here would hand over the
-// answer. Each step below changes exactly one letter, same as the real rules.
-const EXAMPLE = ['COLD', 'CORD', 'CARD', 'WARD', 'WARM']
+// This ladder must never be a real puzzle — see src/game/example.js. Each step
+// changes exactly one letter, same as the real rules.
 
 // Index of the letter that changed from the previous word, for highlighting.
 function changedIndex(prev, word) {
@@ -59,6 +58,16 @@ export function HelpModal({ par, moveCap, leaps, onClose }) {
               <dt>Moves</dt>
               <dd>
                 You get {moveCap} — par plus four. Run out and the puzzle locks.
+              </dd>
+            </div>
+            {/* Nowhere else does the game say this, and it's the rule people
+                collide with: there's no "play again", so losing looks broken
+                unless you already knew it was one attempt. */}
+            <div className="help-term">
+              <dt>One a day</dt>
+              <dd>
+                Everyone gets the same ladder, and you get one go at it. A new one lands
+                at midnight.
               </dd>
             </div>
             <div className="help-term">

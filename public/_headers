@@ -1,0 +1,29 @@
+# Cloudflare Pages cache rules.
+#
+# Vite content-hashes the JS and CSS it emits, but files served out of public/
+# keep their names forever. So /schedule/4.json, /dict/4.json and /syn/4.json
+# would be cached under a stale name if they were treated as immutable — and a
+# `build-schedule --extend` would never reach anyone already holding a copy.
+#
+# These get revalidated instead: cheap (a 304 is a few hundred bytes) and the
+# schedule is append-only, so a stale-while-revalidate day is harmless.
+
+/dict/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/syn/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+/schedule/*
+  Cache-Control: public, max-age=0, must-revalidate
+
+# Hashed filenames — safe to pin forever.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# index.html must never be sticky or a deploy won't land.
+/
+  Cache-Control: public, max-age=0, must-revalidate
+
+/index.html
+  Cache-Control: public, max-age=0, must-revalidate

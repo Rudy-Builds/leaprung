@@ -7,8 +7,8 @@ import { LeapPanel } from './LeapPanel.jsx'
 import { ResultModal } from './ResultModal.jsx'
 import { HelpModal } from './HelpModal.jsx'
 
-export function LeaprungGame({ puzzle, dictSet, synMap }) {
-  const game = useGame(puzzle, dictSet, synMap)
+export function LeaprungGame({ puzzle, dictSet, synMap, number }) {
+  const game = useGame(puzzle, dictSet, synMap, { dayNumber: number })
   const [helpOpen, setHelpOpen] = useState(false)
   const playing = game.status === 'playing'
 
@@ -71,7 +71,7 @@ export function LeaprungGame({ puzzle, dictSet, synMap }) {
           par={puzzle.par}
           leapsUsed={game.leapsUsed}
           solution={puzzle.solution}
-          onReset={game.reset}
+          number={number}
         />
       )}
     </>

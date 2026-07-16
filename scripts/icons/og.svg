@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="-10%" r="75%">
+      <stop offset="0%" stop-color="#1a2036" />
+      <stop offset="100%" stop-color="#0f1220" />
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#glow)" />
+
+  <!-- Same rising-ladder mark as the favicon, scaled up. -->
+  <g transform="translate(96 168)">
+    <rect x="0" y="176" width="56" height="56" rx="14" fill="#6ea8fe" />
+    <rect x="56" y="124" width="56" height="56" rx="14" fill="#eef0f8" opacity="0.28" />
+    <rect x="112" y="72" width="56" height="56" rx="14" fill="#b98cff" />
+    <rect x="168" y="20" width="56" height="56" rx="14" fill="#57cc8a" />
+  </g>
+
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">
+    <text x="392" y="272" fill="#eef0f8" font-size="86" font-weight="800" letter-spacing="-1">Leaprung</text>
+    <text x="392" y="330" fill="#9aa0bd" font-size="30" font-weight="600" letter-spacing="5">DAILY WORD LADDER</text>
+
+    <!-- A real ladder, so the card teaches the game at a glance. KIND→GIVE is
+         puzzle #7 in the pool, not a live spoiler for any particular day. -->
+    <g font-size="40" font-weight="700" letter-spacing="4">
+      <text x="392" y="430" fill="#6ea8fe">KIND</text>
+      <text x="500" y="430" fill="#2a2f4a">·</text>
+      <text x="530" y="430" fill="#eef0f8">FIND</text>
+      <text x="638" y="430" fill="#2a2f4a">·</text>
+      <text x="668" y="430" fill="#eef0f8">FINE</text>
+      <text x="776" y="430" fill="#2a2f4a">·</text>
+      <text x="806" y="430" fill="#eef0f8">FIVE</text>
+      <text x="914" y="430" fill="#2a2f4a">·</text>
+      <text x="944" y="430" fill="#57cc8a">GIVE</text>
+    </g>
+    <text x="392" y="492" fill="#9aa0bd" font-size="26" font-weight="500">Change one letter at a time. Three stars for par.</text>
+  </g>
+</svg>

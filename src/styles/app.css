@@ -494,6 +494,13 @@ html, body {
   gap: 14px;
 }
 .modal-title { margin: 0; font-size: 24px; }
+.modal-number {
+  margin: -10px 0 0; /* pull up under the title — they read as one unit */
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
 .stars { display: flex; justify-content: center; gap: 8px; font-size: 40px; }
 .star { color: var(--line); transition: color 0.2s; }
 .star.on { color: var(--changed); }
@@ -523,6 +530,33 @@ html, body {
   color: var(--muted);
 }
 .modal-reveal .modal-chain { color: var(--win); }
+
+/* Share is the hero action of the result modal now that "Play again" is gone,
+   so it takes --win rather than the --accent used for in-game submits. */
+.share-btn { background: var(--win); }
+
+/* Only rendered when both the native share sheet and the clipboard are
+   unavailable — notably any insecure context, e.g. http://<lan-ip>:5173 while
+   testing on a phone. Pre-selected so it's one long-press to copy. */
+.share-manual {
+  width: 100%;
+  resize: none;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--ink);
+  padding: 10px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: center;
+}
+.countdown {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums; /* stop the width jittering every second */
+}
 
 /* ---------- Help ---------- */
 .help { text-align: left; gap: 16px; }

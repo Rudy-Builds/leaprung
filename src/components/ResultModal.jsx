@@ -1,5 +1,8 @@
 import React from 'react'
 import { isOneLetterDiff } from '../game/rules.js'
+import { buildShareText } from '../game/share.js'
+import { Countdown } from './Countdown.jsx'
+import { ShareButton } from './ShareButton.jsx'
 
 // A path rendered inline, with ⤳ marking the steps that were leaps.
 function PathLine({ path }) {
@@ -18,14 +21,19 @@ function PathLine({ path }) {
   )
 }
 
-export function ResultModal({ status, stars, path, start, end, par, leapsUsed, solution, onReset }) {
+export function ResultModal({ status, stars, path, start, end, par, leapsUsed, solution, number }) {
   const won = status === 'won'
   const steps = path.length - 1
+
+  // Note what is NOT passed: `solution`. buildShareText has no parameter for it,
+  // so the par line revealed below cannot reach the clipboard. See share.js.
+  const shareable = buildShareText({ number, start, end, path, par, stars, status })
 
   return (
     <div className="modal-overlay">
       <div className="modal" role="dialog" aria-modal="true">
         <h2 className="modal-title">{won ? 'Solved!' : 'Out of moves'}</h2>
+        <p className="modal-number">Leaprung #{number}</p>
 
         <div className="stars" aria-label={`${stars} out of 3 stars`}>
           {[1, 2, 3].map((n) => (
@@ -54,9 +62,11 @@ export function ResultModal({ status, stars, path, start, end, par, leapsUsed, s
           </div>
         )}
 
-        <button className="submit" type="button" onClick={onReset}>
-          Play again
-        </button>
+        {/* "Play again" used to live here. Under one play per day it was the
+            cheat button — replaying until you got 3★ would make every shared
+            score meaningless — so the daily countdown takes its place. */}
+        <ShareButton text={shareable} />
+        <Countdown />
       </div>
     </div>
   )

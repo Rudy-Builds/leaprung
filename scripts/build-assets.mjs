@@ -3,191 +3,45 @@
 // Produces:
 //   public/dict/<len>.json  — the VALIDITY list: every word you're allowed to type
 //   public/syn/<len>.json   — { WORD: [SYN, ...] } bundled synonyms for leaps
-//   public/puzzle-candidates-<len>.json — par-verified START/END pairs to pick from
 //
-// Two tiers of vocabulary, doing two different jobs:
+// The daily schedule is built separately by scripts/build-schedule.mjs — it only
+// needs the two word-list fetches, while this script's Datamuse sweep takes a
+// slow unattended pass over every valid word. Keeping them apart means you can
+// rebuild the schedule in seconds without re-scraping synonyms.
 //
-//   VALIDITY (~3.9k 4-letter words) — what the player may type. If it's a real
-//     word, it counts: this is the whole ENABLE dictionary, no frequency filter.
-//     par is measured on THIS graph, so par is a true optimum nobody can beat.
-//   COMMON (~1.3k) — what a puzzle path may route through. A pair only becomes a
-//     candidate if its shortest COMMON route is exactly as short as the true
-//     optimum, so par is always reachable using only everyday words.
-//
-// Sources: ENABLE (the curated dictionary Scrabble and most word games use) for
-// validity, and an OpenSubtitles frequency list to rank/derive the common tier.
-// ENABLE matters here — a scraped "all English words" list is full of proper
-// nouns, acronyms and junk (ABEL, ACLU, ABBR, ACCT), which are not words.
+// Vocabulary tiers and their sources are documented in scripts/lib/words.mjs.
+// Synonyms come from Datamuse rel_syn, same-length and in-validity-dict only.
 // No external deps — Node 18+ global fetch.
 //
 // Usage: node scripts/build-assets.mjs 4
 
-import { mkdir, writeFile } from 'node:fs/promises'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { BLOCKED, cleanSynMap } from './blocklist.mjs'
+import { loadVocab, write } from './lib/words.mjs'
 
-const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const WORD_LEN = Number(process.argv[2]) || 4
 if (WORD_LEN < 3 || WORD_LEN > 6) throw new Error(`unsupported word length: ${WORD_LEN}`)
 
-const COMMON_CUT = 10000 // frequency cutoff for "a puzzle may route through this"
-const PAR_MIN = 4
-const PAR_MAX = 6
-const START_POOL = 400 // how many common words to try as puzzle starts
-
-const REAL_WORDS_URL = 'https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt'
-const FREQ_URL =
-  'https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/en/en_50k.txt'
-
-const write = async (relPath, data) => {
-  const full = resolve(ROOT, relPath)
-  await mkdir(dirname(full), { recursive: true })
-  await writeFile(full, JSON.stringify(data))
-  const n = Array.isArray(data) ? data.length : Object.keys(data).length
-  console.log(`wrote ${relPath} (${n} entries)`)
-}
-
 console.log(`building ${WORD_LEN}-letter assets`)
 
-// ---------------------------------------------------------------------------
-// 1. Vocabulary tiers: real words ∩ frequency rank.
-// ---------------------------------------------------------------------------
-console.log('fetching ENABLE dictionary + frequency list…')
-const [realRaw, freqRaw] = await Promise.all([
-  fetch(REAL_WORDS_URL).then((r) => r.text()),
-  fetch(FREQ_URL).then((r) => r.text()),
-])
+const { validWords, validSet } = await loadVocab(WORD_LEN)
 
-const real = new Set()
-for (const line of realRaw.split('\n')) {
-  const w = line.trim().toUpperCase()
-  if (w.length === WORD_LEN && /^[A-Z]+$/.test(w)) real.add(w)
-}
-
-const rank = new Map()
-freqRaw.split('\n').forEach((line, i) => {
-  const w = line.split(' ')[0]?.trim().toUpperCase()
-  if (w && !rank.has(w)) rank.set(w, i)
-})
-
-const rankOf = (w) => rank.get(w) ?? Infinity
-const byRank = (a, b) => rankOf(a) - rankOf(b)
-
-// Every real word is typeable — no frequency filter on the validity tier.
-const validWords = [...real].sort(byRank)
-const commonWords = validWords.filter((w) => rankOf(w) < COMMON_CUT)
-
-console.log(`  validity: ${validWords.length} words (typeable — every real word)`)
-console.log(`  common:   ${commonWords.length} words (puzzle paths route through these)`)
+// Never filtered by the blocklist: this is the tier par is measured on, and the
+// tier the player may type from. If it's a real word, it counts.
 await write(`public/dict/${WORD_LEN}.json`, validWords)
 
-const validSet = new Set(validWords)
-
 // ---------------------------------------------------------------------------
-// 2. Letter-ladder graphs (wildcard buckets, O(n)) + BFS.
-// ---------------------------------------------------------------------------
-const makeNeighbors = (words) => {
-  const buckets = new Map()
-  for (const w of words) {
-    for (let i = 0; i < WORD_LEN; i++) {
-      const pat = w.slice(0, i) + '*' + w.slice(i + 1)
-      if (!buckets.has(pat)) buckets.set(pat, [])
-      buckets.get(pat).push(w)
-    }
-  }
-  return (w) => {
-    const out = new Set()
-    for (let i = 0; i < WORD_LEN; i++) {
-      const bucket = buckets.get(w.slice(0, i) + '*' + w.slice(i + 1))
-      if (!bucket) continue
-      for (const n of bucket) if (n !== w) out.add(n)
-    }
-    return out
-  }
-}
-
-const bfs = (src, neighbors) => {
-  const dist = new Map([[src, 0]])
-  const prev = new Map()
-  const q = [src]
-  for (let head = 0; head < q.length; head++) {
-    const w = q[head]
-    for (const n of neighbors(w)) {
-      if (dist.has(n)) continue
-      dist.set(n, dist.get(w) + 1)
-      prev.set(n, w)
-      q.push(n)
-    }
-  }
-  return { dist, prev }
-}
-
-const pathBetween = (prev, src, dst) => {
-  const path = [dst]
-  let cur = dst
-  while (cur !== src) {
-    cur = prev.get(cur)
-    path.unshift(cur)
-  }
-  return path
-}
-
-const nbrsValid = makeNeighbors(validWords)
-const nbrsCommon = makeNeighbors(commonWords)
-
-// ---------------------------------------------------------------------------
-// 3. Candidates: the common route must BE the true optimum.
-// ---------------------------------------------------------------------------
-console.log('searching for puzzles…')
-const candidates = []
-for (let s = 0; s < Math.min(START_POOL, commonWords.length); s++) {
-  const src = commonWords[s]
-  const { dist: distValid } = bfs(src, nbrsValid)
-  const { dist: distCommon, prev: prevCommon } = bfs(src, nbrsCommon)
-
-  for (const [dst, d] of distCommon) {
-    if (d < PAR_MIN || d > PAR_MAX) continue
-    // The whole point: a shortcut through some obscure word would make par a lie.
-    if (distValid.get(dst) !== d) continue
-    const path = pathBetween(prevCommon, src, dst)
-    candidates.push({
-      start: src,
-      end: dst,
-      par: d,
-      path,
-      worstRank: Math.max(...path.map(rankOf)),
-    })
-  }
-}
-
-candidates.sort((a, b) => {
-  const pa = a.par <= 5 ? 0 : 1
-  const pb = b.par <= 5 ? 0 : 1
-  if (pa !== pb) return pa - pb
-  return a.worstRank - b.worstRank
-})
-
-const topCandidates = []
-const usedStarts = new Set()
-for (const c of candidates) {
-  if (usedStarts.has(c.start)) continue // one puzzle per start word, for variety
-  usedStarts.add(c.start)
-  topCandidates.push(c)
-  if (topCandidates.length >= 25) break
-}
-await write(`public/puzzle-candidates-${WORD_LEN}.json`, topCandidates)
-console.log(`\n${candidates.length} valid pairs found. Top candidates (par is a true optimum):`)
-for (const c of topCandidates.slice(0, 12)) {
-  console.log(`  ${c.start} → ${c.end}  par ${c.par}   [${c.path.join(' ')}]`)
-}
-
-// ---------------------------------------------------------------------------
-// 4. Synonyms for leaps — Datamuse rel_syn, same-length & in-validity-dict only.
+// Synonyms for leaps.
 // ---------------------------------------------------------------------------
 console.log('\nfetching synonyms from Datamuse…')
 const synMap = {}
 let done = 0
+
 const fetchSyn = async (word) => {
+  // A leap button is the game putting a word in your mouth, so blocked words are
+  // gated here as both key and target. Unfiltered, Datamuse hands back live
+  // entries like TOOL→DICK, BLUE→SEXY and BULL→CRAP on very ordinary words.
+  if (BLOCKED.has(word)) return
+
   const url = `https://api.datamuse.com/words?rel_syn=${word.toLowerCase()}&max=25`
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
@@ -204,6 +58,7 @@ const fetchSyn = async (word) => {
       for (const { word: w } of arr) {
         const up = String(w).toUpperCase()
         if (up.length !== WORD_LEN || up === word || !validSet.has(up)) continue
+        if (BLOCKED.has(up)) continue
         if (!syns.includes(up)) syns.push(up)
         if (syns.length >= 3) break
       }
@@ -225,5 +80,8 @@ const worker = async () => {
   }
 }
 await Promise.all(Array.from({ length: CONCURRENCY }, worker))
-await write(`public/syn/${WORD_LEN}.json`, synMap)
+
+// Belt and braces: fetchSyn already gates, but the map is the thing that ships,
+// so it gets the same guarantee applied to it as a whole.
+await write(`public/syn/${WORD_LEN}.json`, cleanSynMap(synMap))
 console.log(`\ndone — ${Object.keys(synMap).length} words have leap synonyms`)
