@@ -34,7 +34,7 @@ Outputs `public/dict/<len>.json`, `public/syn/<len>.json`, and
 - **`src/game/synonyms.js`** — leap targets from the bundled synonym map (design decision:
   synonyms ship with the game, so leaps work offline from any word and never leak the
   solution).
-- **`src/game/puzzle.js`** — the single hand-authored puzzle (`HAVE → HOME`, par 4,
+- **`src/game/puzzle.js`** — the single hand-authored puzzle (`KIND → GIVE`, par 4,
   4-letter for now; difficulty modes come later).
 - **`src/state/useGame.js`** — reducer holding path / moves / leaps / status.
 - **`src/components/`** — header, word chain, editable tiles, leap panel, result modal.

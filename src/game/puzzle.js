@@ -4,13 +4,13 @@
 // guarantees par is a TRUE optimum: the shortest route on the full typeable
 // dictionary is exactly as short as this common-words-only route, so nobody can
 // beat par by knowing an obscure word.
-//   3-star line: SAVE · GAVE · GIVE · LIVE · LIFE   (par 4, 0 leaps)
+//   3-star line: KIND · FIND · FINE · FIVE · GIVE   (par 4, 0 leaps)
 // Later this comes from /api/puzzle/today; for now it's static config.
 
 export const PUZZLE = {
   wordLength: 4,
-  start: 'SAVE',
-  end: 'LIFE',
+  start: 'KIND',
+  end: 'GIVE',
   par: 4,
   leaps: 2, // leap tokens available
 }

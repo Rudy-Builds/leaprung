@@ -7,16 +7,18 @@
 //
 // Two tiers of vocabulary, doing two different jobs:
 //
-//   VALIDITY (broad, ~3k 4-letter words) — what the player may type. Generous, so
-//     ordinary words like HIVE/CROW/FERN never bounce. par is measured on THIS
-//     graph, so par is a true optimum nobody can beat.
-//   COMMON (strict, ~1.3k) — what a puzzle path may route through. A pair only
-//     becomes a candidate if its shortest COMMON route is exactly as short as the
-//     true optimum, so par is always reachable using only everyday words.
+//   VALIDITY (~3.9k 4-letter words) — what the player may type. If it's a real
+//     word, it counts: this is the whole ENABLE dictionary, no frequency filter.
+//     par is measured on THIS graph, so par is a true optimum nobody can beat.
+//   COMMON (~1.3k) — what a puzzle path may route through. A pair only becomes a
+//     candidate if its shortest COMMON route is exactly as short as the true
+//     optimum, so par is always reachable using only everyday words.
 //
-// Sources: a real-word dictionary ∩ an OpenSubtitles frequency list. The
-// intersection keeps Scrabble-isms (ETUI, ABAC, OXES) out while keeping real
-// everyday words in. No external deps — Node 18+ global fetch.
+// Sources: ENABLE (the curated dictionary Scrabble and most word games use) for
+// validity, and an OpenSubtitles frequency list to rank/derive the common tier.
+// ENABLE matters here — a scraped "all English words" list is full of proper
+// nouns, acronyms and junk (ABEL, ACLU, ABBR, ACCT), which are not words.
+// No external deps — Node 18+ global fetch.
 //
 // Usage: node scripts/build-assets.mjs 4
 
@@ -28,13 +30,12 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const WORD_LEN = Number(process.argv[2]) || 4
 if (WORD_LEN < 3 || WORD_LEN > 6) throw new Error(`unsupported word length: ${WORD_LEN}`)
 
-const VALID_CUT = 50000 // frequency rank cutoff for "you may type this"
-const COMMON_CUT = 10000 // stricter cutoff for "a puzzle may route through this"
+const COMMON_CUT = 10000 // frequency cutoff for "a puzzle may route through this"
 const PAR_MIN = 4
 const PAR_MAX = 6
 const START_POOL = 400 // how many common words to try as puzzle starts
 
-const REAL_WORDS_URL = 'https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt'
+const REAL_WORDS_URL = 'https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt'
 const FREQ_URL =
   'https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/en/en_50k.txt'
 
@@ -51,7 +52,7 @@ console.log(`building ${WORD_LEN}-letter assets`)
 // ---------------------------------------------------------------------------
 // 1. Vocabulary tiers: real words ∩ frequency rank.
 // ---------------------------------------------------------------------------
-console.log('fetching word list + frequency list…')
+console.log('fetching ENABLE dictionary + frequency list…')
 const [realRaw, freqRaw] = await Promise.all([
   fetch(REAL_WORDS_URL).then((r) => r.text()),
   fetch(FREQ_URL).then((r) => r.text()),
@@ -72,10 +73,11 @@ freqRaw.split('\n').forEach((line, i) => {
 const rankOf = (w) => rank.get(w) ?? Infinity
 const byRank = (a, b) => rankOf(a) - rankOf(b)
 
-const validWords = [...real].filter((w) => rankOf(w) < VALID_CUT).sort(byRank)
+// Every real word is typeable — no frequency filter on the validity tier.
+const validWords = [...real].sort(byRank)
 const commonWords = validWords.filter((w) => rankOf(w) < COMMON_CUT)
 
-console.log(`  validity: ${validWords.length} words (typeable)`)
+console.log(`  validity: ${validWords.length} words (typeable — every real word)`)
 console.log(`  common:   ${commonWords.length} words (puzzle paths route through these)`)
 await write(`public/dict/${WORD_LEN}.json`, validWords)
 
