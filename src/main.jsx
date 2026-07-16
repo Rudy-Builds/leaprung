@@ -7,6 +7,24 @@ import { useDayNumber } from './state/useDayNumber.js'
 import { useViewportHeight } from './state/useViewportHeight.js'
 import './styles/app.css'
 
+/**
+ * fetch + parse, with an error a human can act on.
+ *
+ * wrangler.jsonc sets not_found_handling: single-page-application, so a missing
+ * asset doesn't 404 — it serves index.html with a 200. Left alone, a half-shipped
+ * deploy surfaces as "Unexpected token '<'", which names neither the file nor the
+ * cause. Checking the content type turns that into something debuggable.
+ */
+async function getJson(url) {
+  const res = await fetch(url)
+  if (!res.ok) throw new Error(`${url} → HTTP ${res.status}`)
+  const type = res.headers.get('content-type') ?? ''
+  if (!type.includes('json')) {
+    throw new Error(`${url} returned ${type || 'no content-type'}, not JSON — incomplete deploy?`)
+  }
+  return res.json()
+}
+
 // Loads the dictionary, synonym map and daily schedule once, then hands them to
 // the game. All three are fetched in parallel against WORD_LEN rather than
 // chaining on the schedule's own wordLength — one round trip beats two, and the
@@ -19,9 +37,9 @@ function Boot() {
 
   useEffect(() => {
     Promise.all([
-      fetch(`/dict/${WORD_LEN}.json`).then((r) => r.json()),
-      fetch(`/syn/${WORD_LEN}.json`).then((r) => r.json()),
-      fetch(`/schedule/${WORD_LEN}.json`).then((r) => r.json()),
+      getJson(`/dict/${WORD_LEN}.json`),
+      getJson(`/syn/${WORD_LEN}.json`),
+      getJson(`/schedule/${WORD_LEN}.json`),
     ])
       .then(([words, synMap, schedule]) => {
         if (schedule.wordLength !== WORD_LEN) {
