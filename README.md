@@ -46,3 +46,20 @@ Outputs `public/dict/<len>.json`, `public/syn/<len>.json`, and
 Supabase + anonymous auth, streak/progress persistence, the pooled generation pipeline
 (`puzzle_pool` → nightly `daily_puzzles`), Vercel cron, multi-length rotation, and the
 share card. All described in the design doc.
+
+## Data sources
+
+- **[ENABLE](https://github.com/dolph/dictionary)** — the word list (`public/dict/`).
+  Public domain, by Alan Beale.
+- **[FrequencyWords](https://github.com/hermitdave/FrequencyWords)** (MIT) — OpenSubtitles
+  frequency ranks, used at build time only to derive the common-word tier.
+- **[Datamuse API](https://www.datamuse.com/api/)** — synonyms for leaps (`public/syn/`),
+  fetched offline at build time. Free for commercial and non-commercial use.
+
+## License
+
+Copyright (C) 2026 Rudy-Builds.
+
+Licensed under the **GNU Affero General Public License v3.0 or later** — see [LICENSE](LICENSE).
+In short: you're free to use, modify and share this, but if you run a modified version as a
+network service, you must make your source available under the same terms.
