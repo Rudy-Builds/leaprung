@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { LeaprungGame } from './components/LeaprungGame.jsx'
 import { PUZZLE } from './game/puzzle.js'
+import { useViewportHeight } from './state/useViewportHeight.js'
 import './styles/app.css'
 
 // Loads the bundled dictionary + synonym map once, then hands them to the game.
 function Boot() {
+  useViewportHeight()
   const [assets, setAssets] = useState(null)
   const [error, setError] = useState(null)
 
