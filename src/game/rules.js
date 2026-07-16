@@ -46,16 +46,25 @@ export function isLegalMove(nextWord, { current, path, dictSet, leapTargets = []
 }
 
 /**
- * Star score from the doc's scoring table.
+ * Star score.
  *  - steps: number of moves taken to reach END (letter-swaps + leaps).
  *  - par: optimal step count.
  *  - leapsUsed: how many leap tokens were spent.
  *  - solvedWithinCap: reached END without exceeding the move cap.
  *
- *  3 ★ — steps <= par and no leaps
- *  2 ★ — steps <= par+1, or exactly one leap used
- *  1 ★ — solved within the cap by any means
+ * Efficiency sets the base, then each leap costs a star — the doc's "Costs a
+ * star, not a fail". The doc's table reads as a contradiction ("1 leap used → 2"
+ * vs "solved within cap, any leaps → 1"); a per-leap penalty is what reconciles
+ * the two, since "1 leap → 2" only ever meant an otherwise-par run.
+ *
+ *  3 ★ — par, no leaps
+ *  2 ★ — one over par, or par with one leap
+ *  1 ★ — solved at all (leaps never drag a finished run to 0)
  *  0 ★ — cap exceeded (unsolved)
+ *
+ * Reading it as a floor instead of a penalty (`|| leapsUsed === 1`) made a leap
+ * guarantee 2 ★ no matter how many moves the rest of the run took, which made
+ * leaping strictly better than playing well.
  *
  * par is measured on the same word list the player may type, so steps < par
  * shouldn't happen — but score it as a clean 3 rather than dropping to 2 if a
@@ -63,7 +72,6 @@ export function isLegalMove(nextWord, { current, path, dictSet, leapTargets = []
  */
 export function computeStars({ steps, par, leapsUsed, solvedWithinCap }) {
   if (!solvedWithinCap) return 0
-  if (steps <= par && leapsUsed === 0) return 3
-  if (steps <= par + 1 || leapsUsed === 1) return 2
-  return 1
+  const base = steps <= par ? 3 : steps <= par + 1 ? 2 : 1
+  return Math.max(1, base - leapsUsed)
 }
