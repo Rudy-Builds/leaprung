@@ -1,76 +1,110 @@
-// Offline asset builder for the Lineage playable slice.
+// Offline asset builder for Leaprung.
 //
 // Produces:
-//   public/dict/5.json  — array of common 5-letter words (frequency-ordered)
-//   public/syn/5.json   — { WORD: [SYN, SYN, ...] } bundled synonyms for leaps
-//   public/puzzle-candidates.json — BFS-verified START/END pairs to hand-pick from
+//   public/dict/<len>.json  — the VALIDITY list: every word you're allowed to type
+//   public/syn/<len>.json   — { WORD: [SYN, ...] } bundled synonyms for leaps
+//   public/puzzle-candidates-<len>.json — par-verified START/END pairs to pick from
 //
-// This is a small-scale rehearsal of the real §3 generation pipeline, so it also
-// de-risks the eventual replenish job. No external deps — Node 18+ global fetch.
+// Two tiers of vocabulary, doing two different jobs:
+//
+//   VALIDITY (broad, ~3k 4-letter words) — what the player may type. Generous, so
+//     ordinary words like HIVE/CROW/FERN never bounce. par is measured on THIS
+//     graph, so par is a true optimum nobody can beat.
+//   COMMON (strict, ~1.3k) — what a puzzle path may route through. A pair only
+//     becomes a candidate if its shortest COMMON route is exactly as short as the
+//     true optimum, so par is always reachable using only everyday words.
+//
+// Sources: a real-word dictionary ∩ an OpenSubtitles frequency list. The
+// intersection keeps Scrabble-isms (ETUI, ABAC, OXES) out while keeping real
+// everyday words in. No external deps — Node 18+ global fetch.
+//
+// Usage: node scripts/build-assets.mjs 4
 
 import { mkdir, writeFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-// Word length is configurable so we can build assets per difficulty:
-//   node scripts/build-assets.mjs 4
-const WORD_LEN = Number(process.argv[2]) || 5
+const WORD_LEN = Number(process.argv[2]) || 4
 if (WORD_LEN < 3 || WORD_LEN > 6) throw new Error(`unsupported word length: ${WORD_LEN}`)
-console.log(`building ${WORD_LEN}-letter assets`)
-const FREQ_LIST_URL =
-  'https://raw.githubusercontent.com/first20hours/google-10000-english/master/google-10000-english-usa.txt'
+
+const VALID_CUT = 50000 // frequency rank cutoff for "you may type this"
+const COMMON_CUT = 10000 // stricter cutoff for "a puzzle may route through this"
+const PAR_MIN = 4
+const PAR_MAX = 6
+const START_POOL = 400 // how many common words to try as puzzle starts
+
+const REAL_WORDS_URL = 'https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt'
+const FREQ_URL =
+  'https://raw.githubusercontent.com/hermitdave/FrequencyWords/master/content/2018/en/en_50k.txt'
 
 const write = async (relPath, data) => {
   const full = resolve(ROOT, relPath)
   await mkdir(dirname(full), { recursive: true })
   await writeFile(full, JSON.stringify(data))
-  console.log(`wrote ${relPath} (${Array.isArray(data) ? data.length : Object.keys(data).length} entries)`)
+  const n = Array.isArray(data) ? data.length : Object.keys(data).length
+  console.log(`wrote ${relPath} (${n} entries)`)
 }
 
+console.log(`building ${WORD_LEN}-letter assets`)
+
 // ---------------------------------------------------------------------------
-// 1. Dictionary: common words, frequency-ordered, filtered to WORD_LEN letters.
+// 1. Vocabulary tiers: real words ∩ frequency rank.
 // ---------------------------------------------------------------------------
-console.log('fetching frequency list…')
-const raw = await fetch(FREQ_LIST_URL).then((r) => r.text())
-const words = []
-const seen = new Set()
-for (const line of raw.split('\n')) {
+console.log('fetching word list + frequency list…')
+const [realRaw, freqRaw] = await Promise.all([
+  fetch(REAL_WORDS_URL).then((r) => r.text()),
+  fetch(FREQ_URL).then((r) => r.text()),
+])
+
+const real = new Set()
+for (const line of realRaw.split('\n')) {
   const w = line.trim().toUpperCase()
-  if (w.length !== WORD_LEN) continue
-  if (!/^[A-Z]+$/.test(w)) continue
-  if (seen.has(w)) continue
-  seen.add(w)
-  words.push(w) // preserves frequency order (most common first)
+  if (w.length === WORD_LEN && /^[A-Z]+$/.test(w)) real.add(w)
 }
-console.log(`kept ${words.length} common ${WORD_LEN}-letter words`)
-await write(`public/dict/${WORD_LEN}.json`, words)
 
-const dictSet = new Set(words)
-const rank = new Map(words.map((w, i) => [w, i])) // lower = more common
+const rank = new Map()
+freqRaw.split('\n').forEach((line, i) => {
+  const w = line.split(' ')[0]?.trim().toUpperCase()
+  if (w && !rank.has(w)) rank.set(w, i)
+})
+
+const rankOf = (w) => rank.get(w) ?? Infinity
+const byRank = (a, b) => rankOf(a) - rankOf(b)
+
+const validWords = [...real].filter((w) => rankOf(w) < VALID_CUT).sort(byRank)
+const commonWords = validWords.filter((w) => rankOf(w) < COMMON_CUT)
+
+console.log(`  validity: ${validWords.length} words (typeable)`)
+console.log(`  common:   ${commonWords.length} words (puzzle paths route through these)`)
+await write(`public/dict/${WORD_LEN}.json`, validWords)
+
+const validSet = new Set(validWords)
 
 // ---------------------------------------------------------------------------
-// 2. Letter-ladder graph via wildcard buckets (O(n)), then BFS for candidates.
+// 2. Letter-ladder graphs (wildcard buckets, O(n)) + BFS.
 // ---------------------------------------------------------------------------
-const buckets = new Map() // pattern -> [words]
-for (const w of words) {
-  for (let i = 0; i < WORD_LEN; i++) {
-    const pat = w.slice(0, i) + '*' + w.slice(i + 1)
-    if (!buckets.has(pat)) buckets.set(pat, [])
-    buckets.get(pat).push(w)
+const makeNeighbors = (words) => {
+  const buckets = new Map()
+  for (const w of words) {
+    for (let i = 0; i < WORD_LEN; i++) {
+      const pat = w.slice(0, i) + '*' + w.slice(i + 1)
+      if (!buckets.has(pat)) buckets.set(pat, [])
+      buckets.get(pat).push(w)
+    }
   }
-}
-const neighbors = (w) => {
-  const out = new Set()
-  for (let i = 0; i < WORD_LEN; i++) {
-    const pat = w.slice(0, i) + '*' + w.slice(i + 1)
-    for (const n of buckets.get(pat)) if (n !== w) out.add(n)
+  return (w) => {
+    const out = new Set()
+    for (let i = 0; i < WORD_LEN; i++) {
+      const bucket = buckets.get(w.slice(0, i) + '*' + w.slice(i + 1))
+      if (!bucket) continue
+      for (const n of bucket) if (n !== w) out.add(n)
+    }
+    return out
   }
-  return out
 }
 
-// BFS returns {dist, prev} maps from a source.
-const bfs = (src) => {
+const bfs = (src, neighbors) => {
   const dist = new Map([[src, 0]])
   const prev = new Map()
   const q = [src]
@@ -85,6 +119,7 @@ const bfs = (src) => {
   }
   return { dist, prev }
 }
+
 const pathBetween = (prev, src, dst) => {
   const path = [dst]
   let cur = dst
@@ -95,32 +130,41 @@ const pathBetween = (prev, src, dst) => {
   return path
 }
 
-// Candidate puzzles: start from the most-common words, find ends at par 4–6 whose
-// every intermediate word is also common (rank threshold), prefer common endpoints.
-const START_POOL = 300 // consider the 300 most common words as starts
-const COMMON_RANK = 2500 // every path word must be at least this common
-const PAR_MIN = 4
-const PAR_MAX = 6
+const nbrsValid = makeNeighbors(validWords)
+const nbrsCommon = makeNeighbors(commonWords)
+
+// ---------------------------------------------------------------------------
+// 3. Candidates: the common route must BE the true optimum.
+// ---------------------------------------------------------------------------
+console.log('searching for puzzles…')
 const candidates = []
-for (let s = 0; s < Math.min(START_POOL, words.length); s++) {
-  const src = words[s]
-  const { dist, prev } = bfs(src)
-  for (const [dst, d] of dist) {
+for (let s = 0; s < Math.min(START_POOL, commonWords.length); s++) {
+  const src = commonWords[s]
+  const { dist: distValid } = bfs(src, nbrsValid)
+  const { dist: distCommon, prev: prevCommon } = bfs(src, nbrsCommon)
+
+  for (const [dst, d] of distCommon) {
     if (d < PAR_MIN || d > PAR_MAX) continue
-    if ((rank.get(dst) ?? Infinity) > COMMON_RANK) continue
-    const path = pathBetween(prev, src, dst)
-    const worst = Math.max(...path.map((w) => rank.get(w) ?? Infinity))
-    if (worst > COMMON_RANK) continue // reject obscure intermediate words
-    candidates.push({ start: src, end: dst, par: d, path, worstRank: worst })
+    // The whole point: a shortcut through some obscure word would make par a lie.
+    if (distValid.get(dst) !== d) continue
+    const path = pathBetween(prevCommon, src, dst)
+    candidates.push({
+      start: src,
+      end: dst,
+      par: d,
+      path,
+      worstRank: Math.max(...path.map(rankOf)),
+    })
   }
 }
-// Prefer par 4–5, then commonest overall path, then unique start words for variety.
+
 candidates.sort((a, b) => {
   const pa = a.par <= 5 ? 0 : 1
   const pb = b.par <= 5 ? 0 : 1
   if (pa !== pb) return pa - pb
   return a.worstRank - b.worstRank
 })
+
 const topCandidates = []
 const usedStarts = new Set()
 for (const c of candidates) {
@@ -130,13 +174,13 @@ for (const c of candidates) {
   if (topCandidates.length >= 25) break
 }
 await write(`public/puzzle-candidates-${WORD_LEN}.json`, topCandidates)
-console.log('\nTop puzzle candidates (start → end, par):')
+console.log(`\n${candidates.length} valid pairs found. Top candidates (par is a true optimum):`)
 for (const c of topCandidates.slice(0, 12)) {
   console.log(`  ${c.start} → ${c.end}  par ${c.par}   [${c.path.join(' ')}]`)
 }
 
 // ---------------------------------------------------------------------------
-// 3. Synonyms for leaps — Datamuse rel_syn, same-length & in-dict only.
+// 4. Synonyms for leaps — Datamuse rel_syn, same-length & in-validity-dict only.
 // ---------------------------------------------------------------------------
 console.log('\nfetching synonyms from Datamuse…')
 const synMap = {}
@@ -157,9 +201,7 @@ const fetchSyn = async (word) => {
       const syns = []
       for (const { word: w } of arr) {
         const up = String(w).toUpperCase()
-        if (up.length !== WORD_LEN) continue
-        if (up === word) continue
-        if (!dictSet.has(up)) continue
+        if (up.length !== WORD_LEN || up === word || !validSet.has(up)) continue
         if (!syns.includes(up)) syns.push(up)
         if (syns.length >= 3) break
       }
@@ -171,14 +213,13 @@ const fetchSyn = async (word) => {
   }
 }
 
-// Simple concurrency pool.
 const CONCURRENCY = 12
 let idx = 0
 const worker = async () => {
-  while (idx < words.length) {
-    const w = words[idx++]
+  while (idx < validWords.length) {
+    const w = validWords[idx++]
     await fetchSyn(w)
-    if (++done % 200 === 0) console.log(`  synonyms: ${done}/${words.length}`)
+    if (++done % 400 === 0) console.log(`  synonyms: ${done}/${validWords.length}`)
   }
 }
 await Promise.all(Array.from({ length: CONCURRENCY }, worker))

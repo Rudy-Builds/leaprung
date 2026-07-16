@@ -52,14 +52,18 @@ export function isLegalMove(nextWord, { current, path, dictSet, leapTargets = []
  *  - leapsUsed: how many leap tokens were spent.
  *  - solvedWithinCap: reached END without exceeding the move cap.
  *
- *  3 ★ — steps == par and no leaps
+ *  3 ★ — steps <= par and no leaps
  *  2 ★ — steps <= par+1, or exactly one leap used
  *  1 ★ — solved within the cap by any means
  *  0 ★ — cap exceeded (unsolved)
+ *
+ * par is measured on the same word list the player may type, so steps < par
+ * shouldn't happen — but score it as a clean 3 rather than dropping to 2 if a
+ * leap shortcut or a generation slip ever makes it possible.
  */
 export function computeStars({ steps, par, leapsUsed, solvedWithinCap }) {
   if (!solvedWithinCap) return 0
-  if (steps === par && leapsUsed === 0) return 3
+  if (steps <= par && leapsUsed === 0) return 3
   if (steps <= par + 1 || leapsUsed === 1) return 2
   return 1
 }
