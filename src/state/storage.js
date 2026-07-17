@@ -10,6 +10,10 @@
 // cheating costs you a star nobody is checking.
 
 const KEY = 'leaprung:v1:progress'
+// Its own key, not a field on the progress payload: that one is day-scoped and
+// overwritten every midnight, so a flag stored in it would forget the player has
+// ever seen the help and re-open it every morning.
+const HELP_SEEN_KEY = 'leaprung:v1:help-seen'
 const VERSION = 1
 
 /**
@@ -69,4 +73,28 @@ export const defaultStorage = {
       /* no-op */
     }
   },
+}
+
+/**
+ * Whether the player has ever dismissed the help. Kept out of `defaultStorage`
+ * because that object is injected into useGame as the game-progress store, and
+ * this isn't game progress.
+ *
+ * Throws read as false, so blocked storage shows the help every visit rather
+ * than never — annoying beats a player who never learns the rules.
+ */
+export function hasSeenHelp() {
+  try {
+    return localStorage.getItem(HELP_SEEN_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+export function markHelpSeen() {
+  try {
+    localStorage.setItem(HELP_SEEN_KEY, '1')
+  } catch {
+    /* no-op */
+  }
 }

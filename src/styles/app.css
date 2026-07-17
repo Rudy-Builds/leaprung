@@ -482,6 +482,7 @@ html, body {
 }
 .modal {
   margin: auto;
+  position: relative; /* anchors .modal-help-btn */
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -493,6 +494,10 @@ html, body {
   flex-direction: column;
   gap: 14px;
 }
+/* Absolute rather than in the flex flow: the title is centred, and a button in
+   the column would either push it down or fight it for the row. .help-btn's
+   grid-column/justify-self go inert once this takes it out of flow. */
+.modal-help-btn { position: absolute; top: 12px; right: 12px; }
 .modal-title { margin: 0; font-size: 24px; }
 .modal-number {
   margin: -10px 0 0; /* pull up under the title — they read as one unit */
@@ -586,3 +591,7 @@ html, body {
 .help-stars { display: flex; flex-direction: column; gap: 6px; }
 .help-star-row { display: grid; grid-template-columns: 52px 1fr; gap: 10px; align-items: baseline; }
 .help-star-row .pips { color: var(--changed); letter-spacing: 1px; }
+/* Same rule as .modal-reveal: a hairline above sets it off as an aside rather
+   than a fifth rule of the game. */
+.help-feedback { border-top: 1px solid var(--line); padding-top: 14px; font-size: 13px; }
+.help-feedback a { color: var(--accent); }

@@ -21,7 +21,7 @@ function PathLine({ path }) {
   )
 }
 
-export function ResultModal({ status, stars, path, start, end, par, leapsUsed, solution, number }) {
+export function ResultModal({ status, stars, path, start, end, par, leapsUsed, solution, number, onHelp }) {
   const won = status === 'won'
   const steps = path.length - 1
 
@@ -32,6 +32,13 @@ export function ResultModal({ status, stars, path, start, end, par, leapsUsed, s
   return (
     <div className="modal-overlay">
       <div className="modal" role="dialog" aria-modal="true">
+        {/* This is where a confused player actually lands, especially on a
+            loss — the one moment "why did that happen?" gets asked. Same
+            control as the header's, so it reads as the same affordance. */}
+        <button className="help-btn modal-help-btn" type="button" aria-label="How to play" onClick={onHelp}>
+          ?
+        </button>
+
         <h2 className="modal-title">{won ? 'Solved!' : 'Out of moves'}</h2>
         <p className="modal-number">Leaprung #{number}</p>
 

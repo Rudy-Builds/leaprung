@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useGame } from '../state/useGame.js'
+import { hasSeenHelp, markHelpSeen } from '../state/storage.js'
 import { PuzzleHeader } from './PuzzleHeader.jsx'
 import { WordChain } from './WordChain.jsx'
 import { ActiveWordTiles } from './ActiveWordTiles.jsx'
@@ -9,8 +10,20 @@ import { HelpModal } from './HelpModal.jsx'
 
 export function LeaprungGame({ puzzle, dictSet, synMap, number }) {
   const game = useGame(puzzle, dictSet, synMap, { dayNumber: number })
-  const [helpOpen, setHelpOpen] = useState(false)
+  // The rules used to be opt-in behind a button no first-timer had a reason to
+  // press. Lazy initialiser: hasSeenHelp touches localStorage, so it must not
+  // run on every render. This component is keyed by day and remounts at
+  // midnight, which re-runs this — by then the flag is set, so it stays shut.
+  const [helpOpen, setHelpOpen] = useState(() => !hasSeenHelp())
   const playing = game.status === 'playing'
+
+  // Marked on close rather than on open: dismissing it is the signal they've
+  // read it, so refreshing with it still up shows it again. Idempotent, so a
+  // manual open/close later just rewrites the same flag.
+  const closeHelp = () => {
+    markHelpSeen()
+    setHelpOpen(false)
+  }
 
   return (
     <>
@@ -52,15 +65,6 @@ export function LeaprungGame({ puzzle, dictSet, synMap, number }) {
 
       {/* Fixed overlays live outside .game so that no transform/filter/contain
           added there later can capture them into a 460px column. */}
-      {helpOpen && (
-        <HelpModal
-          par={puzzle.par}
-          moveCap={game.moveCap}
-          leaps={puzzle.leaps}
-          onClose={() => setHelpOpen(false)}
-        />
-      )}
-
       {!playing && (
         <ResultModal
           status={game.status}
@@ -72,6 +76,19 @@ export function LeaprungGame({ puzzle, dictSet, synMap, number }) {
           leapsUsed={game.leapsUsed}
           solution={puzzle.solution}
           number={number}
+          onHelp={() => setHelpOpen(true)}
+        />
+      )}
+
+      {/* Renders after ResultModal, and that order is load-bearing: both
+          overlays are z-index 10, so paint order falls back to the DOM. Put
+          help first and the result modal covers it — the ? would look dead. */}
+      {helpOpen && (
+        <HelpModal
+          par={puzzle.par}
+          moveCap={game.moveCap}
+          leaps={puzzle.leaps}
+          onClose={closeHelp}
         />
       )}
     </>

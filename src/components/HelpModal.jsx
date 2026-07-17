@@ -93,6 +93,13 @@ export function HelpModal({ par, moveCap, leaps, onClose }) {
               <span>solved before the cap</span>
             </div>
           </div>
+
+          {/* A mailto, not bare text: on a phone an unlinked address is a
+              copy-by-hand chore and the feedback never gets sent. */}
+          <p className="help-feedback">
+            Hope you enjoyed it! Any feedback? Just email me at{' '}
+            <a href="mailto:rudybuilds@pm.me">rudybuilds@pm.me</a>
+          </p>
         </div>
 
         <button className="submit" type="button" onClick={onClose}>
