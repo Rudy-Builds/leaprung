@@ -1,4 +1,5 @@
 import React from 'react'
+import { ThemeToggle } from './ThemeToggle.jsx'
 
 // Mini tile row used for the start/end words in the header.
 function MiniWord({ word, tone }) {
@@ -20,6 +21,8 @@ export function PuzzleHeader({ start, end, par, movesUsed, moveCap, leapsRemaini
 
   return (
     <div className="header">
+      <ThemeToggle />
+
       <div className="header-main">
         <div className="header-words">
           <MiniWord word={start} tone="start" />
