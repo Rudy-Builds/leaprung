@@ -1,10 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Leaprung">
-  <!-- Four rungs climbing bottom-left to top-right: the ladder, and the climb.
-       Colours are src/styles/app.css tokens — --accent start, --leap for the one
-       leap rung, --win end. Deliberately no lettering: it has to survive 16px. -->
+  <!-- Three rungs climbing bottom-left to top-right: the ladder, and the climb.
+       Colours are the src/styles/app.css tokens: accent (start), leap (middle
+       rung), win (end). Deliberately no lettering: it has to survive 16px.
+
+       Never name a CSS custom property in this file's comments. A favicon is
+       fetched as a standalone image and parsed as XML, where a double hyphen is
+       illegal inside a comment; the leading dashes of a token name make the
+       whole file undecodable and the tab falls back to a blank globe. It hides
+       well: an inlined copy still renders, because HTML comments are lenient,
+       so the PNGs rasterise perfectly from a file no browser can load. The
+       build now rejects it rather than trusting this note — scripts/lib/svg.mjs.
+
+       Three rungs, not four: at 16px a tile is one screen pixel per 4 units, so
+       a fourth rung buys detail nobody can resolve and costs the diagonal its
+       legibility. Even 16-unit step in both axes, so the tiles meet corner to
+       corner and read as one chain. scripts/icons/og.svg carries the same mark
+       and must be kept in step with it. -->
   <rect width="64" height="64" rx="14" fill="#0f1220" />
-  <rect x="7" y="43" width="14" height="14" rx="3.5" fill="#6ea8fe" />
-  <rect x="21" y="30" width="14" height="14" rx="3.5" fill="#eef0f8" opacity="0.28" />
-  <rect x="35" y="17" width="14" height="14" rx="3.5" fill="#b98cff" />
-  <rect x="43" y="6" width="14" height="14" rx="3.5" fill="#57cc8a" />
+  <rect x="8" y="40" width="16" height="16" rx="4" fill="#6ea8fe" />
+  <rect x="24" y="24" width="16" height="16" rx="4" fill="#b98cff" />
+  <rect x="40" y="8" width="16" height="16" rx="4" fill="#57cc8a" />
 </svg>

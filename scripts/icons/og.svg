@@ -7,12 +7,11 @@
   </defs>
   <rect width="1200" height="630" fill="url(#glow)" />
 
-  <!-- Same rising-ladder mark as the favicon, scaled up. -->
-  <g transform="translate(96 168)">
-    <rect x="0" y="176" width="56" height="56" rx="14" fill="#6ea8fe" />
-    <rect x="56" y="124" width="56" height="56" rx="14" fill="#eef0f8" opacity="0.28" />
-    <rect x="112" y="72" width="56" height="56" rx="14" fill="#b98cff" />
-    <rect x="168" y="20" width="56" height="56" rx="14" fill="#57cc8a" />
+  <!-- Same rising-ladder mark as the favicon, scaled up (×4.5 from its 64 grid). -->
+  <g transform="translate(96 186)">
+    <rect x="0" y="144" width="72" height="72" rx="18" fill="#6ea8fe" />
+    <rect x="72" y="72" width="72" height="72" rx="18" fill="#b98cff" />
+    <rect x="144" y="0" width="72" height="72" rx="18" fill="#57cc8a" />
   </g>
 
   <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif">

@@ -18,6 +18,7 @@ import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { promisify } from 'node:util'
+import { findSvgFaults, formatFaults } from './lib/svg.mjs'
 import { ROOT } from './lib/words.mjs'
 
 const run = promisify(execFile)
@@ -35,6 +36,16 @@ const TARGETS = [
   { svg: 'scripts/icons/og.svg', out: 'public/og.png', width: 1200, height: 630 },
   { svg: 'public/favicon.svg', out: 'public/apple-touch-icon.png', width: 180, height: 180 },
 ]
+
+// Refuse to rasterise artwork a browser cannot decode. The PNGs below would come
+// out looking perfect regardless — they are rendered from an HTML page, whose
+// comment parser is lenient where XML's is not — so this is the one moment the
+// defect is cheap to catch: you are already looking at the artwork.
+const faults = await findSvgFaults()
+if (faults.length) {
+  console.error(formatFaults(faults))
+  process.exit(1)
+}
 
 // access(X_OK), not readFile: these are ~hundreds of MB of executable each, and
 // slurping them into a Buffer to ask "does this path exist" is absurd.
