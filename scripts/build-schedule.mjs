@@ -1,7 +1,7 @@
 // Builds the daily puzzle schedule: public/schedule/<len>.json
 //
 // The schedule is a COMMITTED ARTIFACT, not a build output. Puzzle #42 must mean
-// the same thing forever — someone shared "Leaprung #42 ⭐⭐⭐" and a screenshot
+// the same thing forever — someone shared "Leapword #42 ⭐⭐⭐" and a screenshot
 // of it shouldn't quietly become a lie because we re-ran a script. So this file
 // lives in public/, is checked into git, and diffs readably in review.
 //
@@ -29,7 +29,7 @@ const FORCE = argv.includes('--force')
 const DRY = argv.includes('--dry-run')
 
 const GENERATOR_VERSION = 1
-const EPOCH = '2026-07-16' // Leaprung #1. Must never move.
+const EPOCH = '2026-07-16' // Leapword #1. Must never move.
 const LEAPS = 2
 
 const PAR_MIN = 4

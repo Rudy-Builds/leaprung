@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { LeaprungGame } from './components/LeaprungGame.jsx'
+import { LeapwordGame } from './components/LeapwordGame.jsx'
 import { puzzleForDay } from './game/daily.js'
 import { WORD_LEN } from './game/puzzle.js'
 import { useDayNumber } from './state/useDayNumber.js'
@@ -57,7 +57,7 @@ function Boot() {
   // initialiser against the new day's (empty) saved progress. Without it, a tab
   // left open overnight would roll the puzzle but keep yesterday's ladder.
   return (
-    <LeaprungGame
+    <LeapwordGame
       key={day}
       number={day}
       puzzle={puzzleForDay(day, assets.schedule)}

@@ -1,4 +1,4 @@
-# Leaprung
+# Leapword
 
 A daily word-ladder puzzle: transform START → END one letter at a time, with limited
 "leap" jumps to a synonym when you're stuck. Fully client-side and static — no backend.

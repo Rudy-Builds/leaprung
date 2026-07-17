@@ -13,7 +13,7 @@
 
 import { isOneLetterDiff } from './rules.js'
 
-export const SHARE_URL = 'https://leaprung.rudydogum.com'
+export const SHARE_URL = 'https://leapword.app'
 
 // Real emoji, not the site's ★/⤳/· glyphs. Those are typographically nicer but
 // paste into Slack and iMessage as thin monochrome characters — the colour is
@@ -59,7 +59,7 @@ export function buildShareText({ number, start, end, path, par, stars, status })
     ? `${start} → ${end} in ${steps} · par ${par}`
     : `${start} → ${end} · par ${par}`
 
-  return [`Leaprung #${number} ${score}`, summary, buildTileRow(path), SHARE_URL].join('\n')
+  return [`Leapword #${number} ${score}`, summary, buildTileRow(path), SHARE_URL].join('\n')
 }
 
 /**

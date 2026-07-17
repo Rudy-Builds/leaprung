@@ -1,4 +1,4 @@
-// Offline asset builder for Leaprung.
+// Offline asset builder for Leapword.
 //
 // Produces:
 //   public/dict/<len>.json  — the VALIDITY list: every word you're allowed to type

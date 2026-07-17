@@ -15,7 +15,7 @@ import { puzzleFromPath } from './puzzle.js'
 
 const DAY_MS = 86400000
 
-/** 2026-07-16 is Leaprung #1. Must never move: it defines what every #N means. */
+/** 2026-07-16 is Leapword #1. Must never move: it defines what every #N means. */
 const EPOCH_UTC = Date.UTC(2026, 6, 16)
 
 /**

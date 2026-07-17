@@ -9,11 +9,11 @@
 // new attempt and there is no way to stop that without a backend. That's fine:
 // cheating costs you a star nobody is checking.
 
-const KEY = 'leaprung:v1:progress'
+const KEY = 'leapword:v1:progress'
 // Its own key, not a field on the progress payload: that one is day-scoped and
 // overwritten every midnight, so a flag stored in it would forget the player has
 // ever seen the help and re-open it every morning.
-const HELP_SEEN_KEY = 'leaprung:v1:help-seen'
+const HELP_SEEN_KEY = 'leapword:v1:help-seen'
 const VERSION = 1
 
 /**

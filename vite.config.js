@@ -11,7 +11,7 @@ import { findSvgFaults, formatFaults } from './scripts/lib/svg.mjs'
 // the deploy is guaranteed to run. buildStart also fires for `vite dev`, so a
 // bad edit surfaces as soon as the server restarts.
 const validateSvgAssets = () => ({
-  name: 'leaprung-validate-svg-assets',
+  name: 'leapword-validate-svg-assets',
   async buildStart() {
     const faults = await findSvgFaults()
     if (faults.length) this.error(formatFaults(faults))

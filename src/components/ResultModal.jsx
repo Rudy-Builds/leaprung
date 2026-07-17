@@ -40,7 +40,7 @@ export function ResultModal({ status, stars, path, start, end, par, leapsUsed, s
         </button>
 
         <h2 className="modal-title">{won ? 'Solved!' : 'Out of moves'}</h2>
-        <p className="modal-number">Leaprung #{number}</p>
+        <p className="modal-number">Leapword #{number}</p>
 
         <div className="stars" aria-label={`${stars} out of 3 stars`}>
           {[1, 2, 3].map((n) => (

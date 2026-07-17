@@ -8,7 +8,7 @@ import { LeapPanel } from './LeapPanel.jsx'
 import { ResultModal } from './ResultModal.jsx'
 import { HelpModal } from './HelpModal.jsx'
 
-export function LeaprungGame({ puzzle, dictSet, synMap, number }) {
+export function LeapwordGame({ puzzle, dictSet, synMap, number }) {
   const game = useGame(puzzle, dictSet, synMap, { dayNumber: number })
   // The rules used to be opt-in behind a button no first-timer had a reason to
   // press. Lazy initialiser: hasSeenHelp touches localStorage, so it must not
@@ -30,7 +30,7 @@ export function LeaprungGame({ puzzle, dictSet, synMap, number }) {
       <div className="game">
         <header className="topbar">
           <h1 className="brand">
-            Leaprung <span className="brand-sub">daily word ladder</span>
+            Leapword <span className="brand-sub">daily word ladder</span>
           </h1>
         </header>
 

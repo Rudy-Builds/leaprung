@@ -64,7 +64,7 @@ if (!chrome) {
   process.exit(1)
 }
 
-const tmp = await mkdtemp(join(tmpdir(), 'leaprung-icons-'))
+const tmp = await mkdtemp(join(tmpdir(), 'leapword-icons-'))
 
 for (const { svg, out, width, height } of TARGETS) {
   const markup = await readFile(resolve(ROOT, svg), 'utf8')

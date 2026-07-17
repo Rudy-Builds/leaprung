@@ -1,6 +1,6 @@
 {
-  "name": "Leaprung — daily word ladder",
-  "short_name": "Leaprung",
+  "name": "Leapword — daily word ladder",
+  "short_name": "Leapword",
   "description": "Climb from one word to another, one letter at a time. A new word ladder every day.",
   "start_url": "/",
   "display": "standalone",

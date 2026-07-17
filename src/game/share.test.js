@@ -33,7 +33,7 @@ describe('buildShareText', () => {
   test('3 stars, par, no leaps', () => {
     assert.equal(
       buildShareText({ ...base, stars: 3, status: 'won' }),
-      `Leaprung #42 ⭐⭐⭐\nKIND → GIVE in 4 · par 4\n🟩🟩🟩🟩\n${SHARE_URL}`,
+      `Leapword #42 ⭐⭐⭐\nKIND → GIVE in 4 · par 4\n🟩🟩🟩🟩\n${SHARE_URL}`,
     )
   })
 
@@ -45,17 +45,17 @@ describe('buildShareText', () => {
         status: 'won',
         path: ['KIND', 'FIND', 'FINE', 'MINE', 'GIVE', 'GIVE'],
       }),
-      `Leaprung #42 ⭐⭐\nKIND → GIVE in 5 · par 4\n🟩🟩🟩🟪🟪\n${SHARE_URL}`,
+      `Leapword #42 ⭐⭐\nKIND → GIVE in 5 · par 4\n🟩🟩🟩🟪🟪\n${SHARE_URL}`,
     )
   })
 
   test('1 star', () => {
-    assert.match(buildShareText({ ...base, stars: 1, status: 'won' }), /^Leaprung #42 ⭐\n/)
+    assert.match(buildShareText({ ...base, stars: 1, status: 'won' }), /^Leapword #42 ⭐\n/)
   })
 
   test('a loss shows hollow stars and no move count — not a fake completion', () => {
     const out = buildShareText({ ...base, stars: 0, status: 'lost' })
-    assert.equal(out, `Leaprung #42 ☆☆☆\nKIND → GIVE · par 4\n🟩🟩🟩🟩\n${SHARE_URL}`)
+    assert.equal(out, `Leapword #42 ☆☆☆\nKIND → GIVE · par 4\n🟩🟩🟩🟩\n${SHARE_URL}`)
     assert.doesNotMatch(out, /in \d/)
     assert.doesNotMatch(out, /⭐/)
   })
