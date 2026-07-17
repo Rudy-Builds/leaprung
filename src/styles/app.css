@@ -1,5 +1,11 @@
+/* Dark is the base palette AND the fallback when no data-theme is set (e.g. the
+   pre-paint script in index.html was blocked). The player's preference — system
+   (default) / light / dark — is resolved to a concrete light|dark value and
+   written to <html data-theme>; see src/state/useTheme.js. */
 :root {
+  color-scheme: dark;
   --bg: #0f1220;
+  --bg-glow: #1a2036;   /* the lighter centre of the top glow */
   --panel: #171a2b;
   --panel-2: #1f2338;
   --ink: #eef0f8;
@@ -10,7 +16,31 @@
   --changed: #f0b24b;  /* changed letter */
   --leap: #b98cff;     /* leaps */
   --bad: #ff7a86;
+  --on-accent: #0f1220;          /* text on the filled accent/win buttons */
+  --scrim: rgba(6, 8, 16, 0.72); /* modal backdrop */
   --radius: 12px;
+}
+
+/* Light palette. accent/win/changed/leap/bad are deepened from their dark
+   counterparts for legible contrast on the near-white surfaces — several of
+   these double as text (links, the leap glyphs, error and reveal labels), not
+   just as fills, so they can't stay pastel. */
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f2f4fb;
+  --bg-glow: #ffffff;
+  --panel: #ffffff;
+  --panel-2: #edf0fa;
+  --ink: #191d2e;
+  --muted: #59607f;
+  --line: #d8dcee;
+  --accent: #2f68d8;
+  --win: #0f7a47;
+  --changed: #b26a00;
+  --leap: #7a44e0;
+  --bad: #d13445;
+  --on-accent: #ffffff;
+  --scrim: rgba(15, 18, 36, 0.5);
 }
 
 * { box-sizing: border-box; }
@@ -23,7 +53,7 @@ html, body {
      ~60px and permanently gain a stable layout. */
   overflow: hidden;
   overscroll-behavior-y: none;
-  background: radial-gradient(1200px 600px at 50% -10%, #1a2036, var(--bg));
+  background: radial-gradient(1200px 600px at 50% -10%, var(--bg-glow), var(--bg));
   color: var(--ink);
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-text-size-adjust: 100%;
@@ -138,6 +168,11 @@ html, body {
   inset: -4px;
 }
 .help-btn:hover { color: var(--ink); border-color: var(--accent); }
+/* Reuses .help-btn's round chrome but sits in the grid's empty left balance
+   column, so the two controls frame the goal symmetrically. Later in the file
+   than .help-btn, so these column/justify values win the equal-specificity tie. */
+.theme-btn { grid-column: 1; justify-self: start; }
+.theme-btn svg { width: 18px; height: 18px; display: block; }
 /* Fluid, unlike the original fixed 26px: these now share the row with the help
    button, so at 375px a fixed tile overflows the middle column. Upper bound is
    the original size, so a full-width column looks exactly as it did. */
@@ -350,7 +385,7 @@ html, body {
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.5px;
-  color: #0f1220;
+  color: var(--on-accent);
   background: var(--accent);
   cursor: pointer;
   touch-action: manipulation;
@@ -470,7 +505,7 @@ html, body {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(6, 8, 16, 0.72);
+  background: var(--scrim);
   /* flex + margin:auto rather than place-items:center — grid centring clips a
      too-tall modal unreachably now that body is overflow:hidden. */
   display: flex;

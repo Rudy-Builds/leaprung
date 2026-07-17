@@ -14,6 +14,10 @@ const KEY = 'leapword:v1:progress'
 // overwritten every midnight, so a flag stored in it would forget the player has
 // ever seen the help and re-open it every morning.
 const HELP_SEEN_KEY = 'leapword:v1:help-seen'
+// The theme *preference*: 'light' or 'dark' when the player has overridden, or
+// absent to follow the device. Kept in sync with the pre-paint script in
+// index.html, which reads this same key before React loads.
+const THEME_KEY = 'leapword:v1:theme'
 const VERSION = 1
 
 /**
@@ -94,6 +98,30 @@ export function hasSeenHelp() {
 export function markHelpSeen() {
   try {
     localStorage.setItem(HELP_SEEN_KEY, '1')
+  } catch {
+    /* no-op */
+  }
+}
+
+/**
+ * The stored theme preference: 'light', 'dark', or 'system' (the default, which
+ * follows the device). Anything unrecognised — or blocked storage — reads as
+ * 'system', so a broken read simply falls back to matching the OS.
+ */
+export function loadThemePref() {
+  try {
+    const v = localStorage.getItem(THEME_KEY)
+    return v === 'light' || v === 'dark' ? v : 'system'
+  } catch {
+    return 'system'
+  }
+}
+
+/** 'system' is stored as absence, so the key only ever holds an explicit choice. */
+export function saveThemePref(pref) {
+  try {
+    if (pref === 'light' || pref === 'dark') localStorage.setItem(THEME_KEY, pref)
+    else localStorage.removeItem(THEME_KEY)
   } catch {
     /* no-op */
   }

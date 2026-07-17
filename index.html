@@ -10,6 +10,27 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover, interactiveWidget=resizes-content"
     />
     <meta name="theme-color" content="#0f1220" />
+    <!-- Resolve the theme before first paint so there's no flash of the wrong
+         palette. Mirrors src/state/useTheme.js: the stored value is a
+         *preference* ('light' | 'dark' | absent = follow the device), while
+         <html data-theme> is always the resolved light|dark the CSS keys off.
+         Keep the key and the two colours in sync with useTheme.js / app.css. -->
+    <script>
+      (function () {
+        try {
+          var pref = localStorage.getItem('leapword:v1:theme')
+          var resolved =
+            pref === 'light' || pref === 'dark'
+              ? pref
+              : matchMedia('(prefers-color-scheme: light)').matches
+                ? 'light'
+                : 'dark'
+          document.documentElement.dataset.theme = resolved
+          var m = document.querySelector('meta[name="theme-color"]')
+          if (m) m.setAttribute('content', resolved === 'light' ? '#f2f4fb' : '#0f1220')
+        } catch (e) {}
+      })()
+    </script>
     <title>Leapword — daily word ladder</title>
     <meta
       name="description"
