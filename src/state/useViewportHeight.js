@@ -41,7 +41,11 @@ export function useViewportHeight() {
         return
       }
 
-      const h = Math.round(vv.height)
+      // floor, not round: Safari reports fractional heights (Chrome rounds), and
+      // rounding 659.6 up to 660 makes the column half a pixel taller than the
+      // real viewport — a hairline clip at the bottom edge that differs by
+      // browser. Flooring can only ever undershoot.
+      const h = Math.floor(vv.height)
       root.style.setProperty('--app-h', `${h}px`)
       root.classList.toggle('vp-short', h < SHORT_H)
       root.classList.toggle('vp-tiny', h < TINY_H)

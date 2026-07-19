@@ -235,6 +235,9 @@ html, body {
    scrolling (class set in WordChain): the box now hugs its rows, so an
    unconditional mask would dim the first row when nothing is clipped. */
 .chain-scroll.is-scrollable {
+  /* -webkit- first: unprefixed mask-image is Safari 15.4+, the prefixed form is
+     every WebKit — without it, older iOS gets no fade and a hard guillotine. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 18px, #000 100%);
   mask-image: linear-gradient(to bottom, transparent 0, #000 18px, #000 100%);
 }
 @media (prefers-reduced-motion: reduce) {

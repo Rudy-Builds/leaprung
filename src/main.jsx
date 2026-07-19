@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { LeapwordGame } from './components/LeapwordGame.jsx'
-import { puzzleForDay } from './game/daily.js'
+import { puzzleForDay, EPOCH_ISO } from './game/daily.js'
 import { WORD_LEN } from './game/puzzle.js'
 import { useDayNumber } from './state/useDayNumber.js'
 import { useViewportHeight } from './state/useViewportHeight.js'
@@ -45,6 +45,12 @@ function Boot() {
         if (schedule.wordLength !== WORD_LEN) {
           throw new Error(`schedule is ${schedule.wordLength}-letter, app is ${WORD_LEN}`)
         }
+        // dayNumber() counts from EPOCH_ISO; the schedule indexes its paths
+        // from its own epoch. If they ever disagree, every player silently
+        // gets the wrong day's puzzle — fail loudly instead.
+        if (schedule.epoch !== EPOCH_ISO) {
+          throw new Error(`schedule epoch is ${schedule.epoch}, app expects ${EPOCH_ISO}`)
+        }
         setAssets({ dictSet: new Set(words), synMap, schedule })
       })
       .catch((e) => setError(String(e)))
@@ -67,7 +73,14 @@ function Boot() {
   )
 }
 
-createRoot(document.getElementById('root')).render(
+// Dev-only guard: main.jsx is the module Vite re-executes on every hot update,
+// and calling createRoot twice on the same container warns and double-mounts.
+// The root survives updates in import.meta.hot.data; prod runs this once anyway.
+const container = document.getElementById('root')
+const root = import.meta.hot
+  ? (import.meta.hot.data.root ??= createRoot(container))
+  : createRoot(container)
+root.render(
   <React.StrictMode>
     <Boot />
   </React.StrictMode>,

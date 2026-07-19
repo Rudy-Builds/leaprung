@@ -15,8 +15,14 @@ import { puzzleFromPath } from './puzzle.js'
 
 const DAY_MS = 86400000
 
-/** 2026-07-16 is Leapword #1. Must never move: it defines what every #N means. */
-const EPOCH_UTC = Date.UTC(2026, 6, 16)
+/** 2026-07-16 is Leapword #1. Must never move: it defines what every #N means.
+ * Exported so Boot can assert the schedule was generated against the same
+ * epoch — a regenerated schedule with a shifted epoch would silently hand
+ * everyone the wrong day's puzzle. */
+export const EPOCH_ISO = '2026-07-16'
+// Date-only ISO strings parse as UTC midnight per spec, so this equals
+// Date.UTC(2026, 6, 16) — one constant, two representations.
+const EPOCH_UTC = Date.parse(EPOCH_ISO)
 
 /**
  * Today's puzzle number, counting from 1.
