@@ -15,6 +15,11 @@ import { isOneLetterDiff } from './rules.js'
 
 export const SHARE_URL = 'https://leapword.app'
 
+// The card links to the exact puzzle, not the homepage. Opened the same day it's
+// today's daily anyway; opened later it lands on that specific past puzzle (an
+// archive play) instead of a cold, unrelated homepage — see useRoute + Boot.
+export const puzzleUrl = (number) => `${SHARE_URL}/${number}`
+
 // Real emoji, not the site's ★/⤳/· glyphs. Those are typographically nicer but
 // paste into Slack and iMessage as thin monochrome characters — the colour is
 // the entire reason a Wordle grid travels.
@@ -47,19 +52,27 @@ export function buildTileRow(path) {
  * @param {number} r.par
  * @param {number} r.stars   0-3
  * @param {'won'|'lost'} r.status
+ * @param {number} [r.streak]  current day streak; only ever printed on a win
  */
-export function buildShareText({ number, start, end, path, par, stars, status }) {
+export function buildShareText({ number, start, end, path, par, stars, status, streak }) {
   const won = status === 'won'
   const steps = path.length - 1
 
   // A loss shows three hollow stars rather than a fake completion — "☆☆☆" reads
   // as a score of zero, where "✖" reads as an error.
   const score = won ? STAR.repeat(stars) : NO_STAR.repeat(3)
+
+  // The streak rides on line 1 (not its own line) to keep the card four lines —
+  // and only on a win: a broken streak is not something you paste into a group
+  // chat. `streak > 0` also makes the arg optional, so callers without it (and
+  // the 1★/loss cases) are unchanged.
+  const flame = won && streak > 0 ? ` · 🔥${streak}` : ''
+
   const summary = won
     ? `${start} → ${end} in ${steps} · par ${par}`
     : `${start} → ${end} · par ${par}`
 
-  return [`Leapword #${number} ${score}`, summary, buildTileRow(path), SHARE_URL].join('\n')
+  return [`Leapword #${number} ${score}${flame}`, summary, buildTileRow(path), puzzleUrl(number)].join('\n')
 }
 
 /**

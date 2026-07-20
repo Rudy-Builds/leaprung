@@ -9,11 +9,17 @@
 // new attempt and there is no way to stop that without a backend. That's fine:
 // cheating costs you a star nobody is checking.
 
+import { DEFAULT_STREAK, nextStreak } from '../game/streak.js'
+
 const KEY = 'leapword:v1:progress'
 // Its own key, not a field on the progress payload: that one is day-scoped and
 // overwritten every midnight, so a flag stored in it would forget the player has
 // ever seen the help and re-open it every morning.
 const HELP_SEEN_KEY = 'leapword:v1:help-seen'
+// Same reasoning, load-bearing for the streak: kept OUT of the day-scoped
+// progress payload, which is wiped every midnight. A streak stored there would
+// reset to zero every night — the exact bug this key exists to avoid.
+const STREAK_KEY = 'leapword:v1:streak'
 // The theme *preference*: 'light' or 'dark' when the player has overridden, or
 // absent to follow the device. Kept in sync with the pre-paint script in
 // index.html, which reads this same key before React loads.
@@ -77,6 +83,48 @@ export const defaultStorage = {
       /* no-op */
     }
   },
+}
+
+// A persisted streak we can't make sense of is discarded, not trusted: a NaN
+// `current` or a string `lastDay` would poison every future comparison in
+// nextStreak. Anything off-shape falls back to a fresh streak.
+function sanitizeStreak(raw) {
+  if (!raw || typeof raw !== 'object') return { ...DEFAULT_STREAK }
+  const count = (v) => (Number.isFinite(v) && v >= 0 ? Math.floor(v) : 0)
+  return {
+    current: count(raw.current),
+    max: count(raw.max),
+    lastDay: Number.isFinite(raw.lastDay) ? Math.floor(raw.lastDay) : null,
+    played: count(raw.played),
+    wins: count(raw.wins),
+  }
+}
+
+/** The lifetime streak, or a fresh one if never played or storage is blocked. */
+export function loadStreak() {
+  try {
+    const raw = localStorage.getItem(STREAK_KEY)
+    return sanitizeStreak(raw ? JSON.parse(raw) : null)
+  } catch {
+    return { ...DEFAULT_STREAK }
+  }
+}
+
+/**
+ * Fold today's result into the stored streak and persist it. Idempotent: called
+ * again for a day already counted, it writes nothing (nextStreak hands back the
+ * same reference) and returns the streak unchanged. Returns the streak either way.
+ */
+export function recordDailyResult(day, won) {
+  const prev = loadStreak()
+  const next = nextStreak(prev, { day, won })
+  if (next === prev) return prev // this day is already counted — nothing to write
+  try {
+    localStorage.setItem(STREAK_KEY, JSON.stringify(next))
+  } catch {
+    // In-memory for the session; degrades like every other write in this module.
+  }
+  return next
 }
 
 /**

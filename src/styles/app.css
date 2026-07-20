@@ -119,6 +119,35 @@ html, body {
   color: var(--muted);
   margin-top: 2px;
 }
+
+/* ---------- Archive / challenge banner ---------- */
+/* Shown only when a shared "/N" link lands on a past puzzle. Slim and quiet — it
+   frames the play without competing with the board. */
+.archive-bar {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 12px;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-2);
+  font-size: 13px;
+  color: var(--muted);
+}
+.archive-today {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  color: var(--accent);
+  cursor: pointer;
+}
+.archive-today:hover { text-decoration: underline; }
+
 /* ---------- Header ---------- */
 /* Never shrinks: it has nowhere to go but clipped. The chain is the only thing
    that gives, so it absorbs the keyboard on its own. Three columns rather than
@@ -548,6 +577,9 @@ html, body {
 .star { color: var(--line); transition: color 0.2s; }
 .star.on { color: var(--changed); }
 .modal-summary { margin: 0; color: var(--muted); font-size: 14px; }
+.modal-streak { margin: 0; font-size: 14px; font-weight: 600; color: var(--ink); }
+/* A broken streak is a quieter note, not a boast — muted and lighter. */
+.modal-streak.broke { color: var(--muted); font-weight: 400; }
 .modal-chain {
   display: flex;
   flex-wrap: wrap;
@@ -577,6 +609,10 @@ html, body {
 /* Share is the hero action of the result modal now that "Play again" is gone,
    so it takes --win rather than the --accent used for in-game submits. */
 .share-btn { background: var(--win); }
+
+/* The result-modal CTA that replaces the countdown on an archive play — sends
+   the visitor to their real daily, so it takes the in-game --accent. */
+.play-today-btn { background: var(--accent); }
 
 /* Only rendered when both the native share sheet and the clipboard are
    unavailable — notably any insecure context, e.g. http://<lan-ip>:5173 while

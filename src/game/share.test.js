@@ -1,7 +1,7 @@
 // node --test src/game/
 import assert from 'node:assert/strict'
 import { test, describe } from 'node:test'
-import { SHARE_URL, buildShareText, buildTileRow } from './share.js'
+import { SHARE_URL, buildShareText, buildTileRow, puzzleUrl } from './share.js'
 
 const KIND_GIVE = ['KIND', 'FIND', 'FINE', 'FIVE', 'GIVE']
 
@@ -33,7 +33,7 @@ describe('buildShareText', () => {
   test('3 stars, par, no leaps', () => {
     assert.equal(
       buildShareText({ ...base, stars: 3, status: 'won' }),
-      `Leapword #42 ⭐⭐⭐\nKIND → GIVE in 4 · par 4\n🟩🟩🟩🟩\n${SHARE_URL}`,
+      `Leapword #42 ⭐⭐⭐\nKIND → GIVE in 4 · par 4\n🟩🟩🟩🟩\n${SHARE_URL}/42`,
     )
   })
 
@@ -45,7 +45,7 @@ describe('buildShareText', () => {
         status: 'won',
         path: ['KIND', 'FIND', 'FINE', 'MINE', 'GIVE', 'GIVE'],
       }),
-      `Leapword #42 ⭐⭐\nKIND → GIVE in 5 · par 4\n🟩🟩🟩🟪🟪\n${SHARE_URL}`,
+      `Leapword #42 ⭐⭐\nKIND → GIVE in 5 · par 4\n🟩🟩🟩🟪🟪\n${SHARE_URL}/42`,
     )
   })
 
@@ -55,17 +55,41 @@ describe('buildShareText', () => {
 
   test('a loss shows hollow stars and no move count — not a fake completion', () => {
     const out = buildShareText({ ...base, stars: 0, status: 'lost' })
-    assert.equal(out, `Leapword #42 ☆☆☆\nKIND → GIVE · par 4\n🟩🟩🟩🟩\n${SHARE_URL}`)
+    assert.equal(out, `Leapword #42 ☆☆☆\nKIND → GIVE · par 4\n🟩🟩🟩🟩\n${SHARE_URL}/42`)
     assert.doesNotMatch(out, /in \d/)
     assert.doesNotMatch(out, /⭐/)
   })
 
-  test('always four lines, always ends with the URL', () => {
+  test('always four lines, always ends with the puzzle link', () => {
     for (const status of ['won', 'lost']) {
       const lines = buildShareText({ ...base, stars: 2, status }).split('\n')
       assert.equal(lines.length, 4)
-      assert.equal(lines[3], SHARE_URL)
+      assert.equal(lines[3], puzzleUrl(42))
+      assert.equal(lines[3], `${SHARE_URL}/42`)
     }
+  })
+
+  test('the link points at the shared puzzle, not the homepage', () => {
+    const out = buildShareText({ ...base, number: 137, stars: 3, status: 'won' })
+    assert.equal(out.split('\n')[3], `${SHARE_URL}/137`)
+  })
+
+  test('a win rides the streak on line 1, still four lines', () => {
+    const out = buildShareText({ ...base, stars: 3, status: 'won', streak: 5 })
+    assert.equal(out.split('\n')[0], 'Leapword #42 ⭐⭐⭐ · 🔥5')
+    assert.equal(out.split('\n').length, 4)
+  })
+
+  test('a loss never brags a streak, even if one is passed', () => {
+    assert.doesNotMatch(
+      buildShareText({ ...base, stars: 0, status: 'lost', streak: 9 }),
+      /🔥/,
+    )
+  })
+
+  test('a zero or absent streak is omitted, leaving the card unchanged', () => {
+    assert.doesNotMatch(buildShareText({ ...base, stars: 2, status: 'won', streak: 0 }), /🔥/)
+    assert.doesNotMatch(buildShareText({ ...base, stars: 2, status: 'won' }), /🔥/)
   })
 })
 

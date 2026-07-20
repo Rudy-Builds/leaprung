@@ -21,13 +21,13 @@ function PathLine({ path }) {
   )
 }
 
-export function ResultModal({ status, stars, path, start, end, par, leapsUsed, solution, number, onHelp }) {
+export function ResultModal({ status, stars, path, start, end, par, leapsUsed, solution, number, streak = {}, isArchive = false, today, onPlayToday, onHelp }) {
   const won = status === 'won'
   const steps = path.length - 1
 
   // Note what is NOT passed: `solution`. buildShareText has no parameter for it,
   // so the par line revealed below cannot reach the clipboard. See share.js.
-  const shareable = buildShareText({ number, start, end, path, par, stars, status })
+  const shareable = buildShareText({ number, start, end, path, par, stars, status, streak: streak.current })
 
   return (
     <div className="modal-overlay">
@@ -58,6 +58,16 @@ export function ResultModal({ status, stars, path, start, end, par, leapsUsed, s
           {leapsUsed > 0 && ` · ${leapsUsed} leap${leapsUsed === 1 ? '' : 's'}`}
         </p>
 
+        {/* The streak: a boast on a win, a quiet sting on the loss that ends one.
+            Both are the reason to come back tomorrow. `brokeStreak` is only set in
+            the session where the loss actually happens — see useStreak. */}
+        {won && streak.current > 0 && (
+          <p className="modal-streak">🔥 {streak.current} day streak</p>
+        )}
+        {!won && streak.brokeStreak > 0 && (
+          <p className="modal-streak broke">💔 {streak.brokeStreak} day streak ended</p>
+        )}
+
         <PathLine path={path} />
 
         {/* Losing used to be a dead end: zero stars, no explanation, and a replay
@@ -73,7 +83,15 @@ export function ResultModal({ status, stars, path, start, end, par, leapsUsed, s
             cheat button — replaying until you got 3★ would make every shared
             score meaningless — so the daily countdown takes its place. */}
         <ShareButton text={shareable} />
-        <Countdown />
+        {/* On an archive play a countdown to "the next puzzle" is meaningless —
+            the visitor's real daily is already out. Point them at it instead. */}
+        {isArchive ? (
+          <button type="button" className="submit play-today-btn" onClick={onPlayToday}>
+            Play today’s Leapword #{today} →
+          </button>
+        ) : (
+          <Countdown />
+        )}
       </div>
     </div>
   )
