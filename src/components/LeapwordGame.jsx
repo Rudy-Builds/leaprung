@@ -33,6 +33,10 @@ export function LeapwordGame({ puzzle, dictSet, synMap, number, isArchive = fals
   // run on every render. This component is keyed by day and remounts at
   // midnight, which re-runs this — by then the flag is set, so it stays shut.
   const [helpOpen, setHelpOpen] = useState(() => !hasSeenHelp())
+  // The result modal auto-opens on finish, but can now be dismissed to admire the
+  // finished board. Kept here (not in the modal) because the board needs a way
+  // back to it — Share lives inside. Resets per puzzle via the key={number} remount.
+  const [resultOpen, setResultOpen] = useState(true)
   const playing = game.status === 'playing'
 
   // Marked on close rather than on open: dismissing it is the signal they've
@@ -107,11 +111,21 @@ export function LeapwordGame({ puzzle, dictSet, synMap, number, isArchive = fals
             />
           </div>
         )}
+
+        {/* Finished, with the result dismissed: the way back to it (Share, stars,
+            and the par line all live in the modal). Sits where the input was. */}
+        {!playing && !resultOpen && (
+          <div className="play">
+            <button className="result-reopen" type="button" onClick={() => setResultOpen(true)}>
+              See result
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Fixed overlays live outside .game so that no transform/filter/contain
           added there later can capture them into a 460px column. */}
-      {!playing && (
+      {!playing && resultOpen && (
         <ResultModal
           status={game.status}
           stars={game.stars}
@@ -127,6 +141,7 @@ export function LeapwordGame({ puzzle, dictSet, synMap, number, isArchive = fals
           today={today}
           onPlayToday={onPlayToday}
           onOpenArchive={onOpenArchive}
+          onClose={() => setResultOpen(false)}
           onHelp={() => setHelpOpen(true)}
         />
       )}

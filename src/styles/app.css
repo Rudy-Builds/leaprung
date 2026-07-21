@@ -152,9 +152,9 @@ html, body {
 /* ---------- Header ---------- */
 /* Never shrinks: it has nowhere to go but clipped. The chain is the only thing
    that gives, so it absorbs the keyboard on its own. Three columns rather than
-   a centred row with an absolute button: the empty left column balances the
-   help button, so the goal and stats stay centred in the box instead of being
-   nudged left by it. */
+   a centred row with an absolute button: a 36px column on each side (help left,
+   theme right) balances the other, so the goal and stats stay centred in the box
+   instead of being nudged by either. */
 .header {
   flex: 0 0 auto;
   background: var(--panel);
@@ -174,8 +174,8 @@ html, body {
   gap: 12px;
 }
 .help-btn {
-  grid-column: 3;
-  justify-self: end;
+  grid-column: 1;
+  justify-self: start;
   position: relative;
   width: 36px;
   height: 36px;
@@ -198,10 +198,10 @@ html, body {
   inset: -4px;
 }
 .help-btn:hover { color: var(--ink); border-color: var(--accent); }
-/* Reuses .help-btn's round chrome but sits in the grid's empty left balance
-   column, so the two controls frame the goal symmetrically. Later in the file
-   than .help-btn, so these column/justify values win the equal-specificity tie. */
-.theme-btn { grid-column: 1; justify-self: start; }
+/* Reuses .help-btn's round chrome but sits in the grid's right balance column,
+   so the two controls frame the goal symmetrically. Later in the file than
+   .help-btn, so these column/justify values win the equal-specificity tie. */
+.theme-btn { grid-column: 3; justify-self: end; }
 .theme-btn svg { width: 18px; height: 18px; display: block; }
 /* Same round chrome as the header icons, parked at the topbar's right edge so the
    centred brand is undisturbed. After .help-btn in the file, so its position wins
@@ -437,6 +437,25 @@ html, body {
 .submit:hover { filter: brightness(1.06); }
 .submit:active { transform: translateY(1px); }
 
+/* Reopens the dismissed result modal, sitting where the input was. A ghost
+   button, not a solid one — it's a way back, not a call to action, so it stays
+   quieter than the Share button it leads to. */
+.result-reopen {
+  appearance: none;
+  min-height: 44px;
+  padding: 10px 22px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.result-reopen:hover { color: var(--ink); border-color: var(--accent); }
+
 /* ---------- Leap ---------- */
 .leap {
   display: flex;
@@ -599,7 +618,11 @@ html, body {
 /* Absolute rather than in the flex flow: the title is centred, and a button in
    the column would either push it down or fight it for the row. .help-btn's
    grid-column/justify-self go inert once this takes it out of flow. */
-.modal-help-btn { position: absolute; top: 12px; right: 12px; }
+.modal-help-btn { position: absolute; top: 12px; left: 12px; }
+/* Close owns the conventional top-right corner. Same round chrome as the help
+   button; the × is an SVG so it stays crisp where a glyph would render thin. */
+.modal-close-btn { position: absolute; top: 12px; right: 12px; }
+.modal-close-btn svg { width: 18px; height: 18px; display: block; }
 .modal-title { margin: 0; font-size: 24px; }
 .modal-number {
   margin: -10px 0 0; /* pull up under the title — they read as one unit */

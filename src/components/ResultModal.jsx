@@ -21,7 +21,7 @@ function PathLine({ path }) {
   )
 }
 
-export function ResultModal({ status, stars, path, start, end, par, leapsUsed, solution, number, streak = {}, isArchive = false, today, onPlayToday, onOpenArchive, onHelp }) {
+export function ResultModal({ status, stars, path, start, end, par, leapsUsed, solution, number, streak = {}, isArchive = false, today, onPlayToday, onOpenArchive, onClose, onHelp }) {
   const won = status === 'won'
   const steps = path.length - 1
 
@@ -34,9 +34,17 @@ export function ResultModal({ status, stars, path, start, end, par, leapsUsed, s
       <div className="modal" role="dialog" aria-modal="true">
         {/* This is where a confused player actually lands, especially on a
             loss — the one moment "why did that happen?" gets asked. Same
-            control as the header's, so it reads as the same affordance. */}
+            control as the header's, so it reads as the same affordance. Moved to
+            the left corner now that Close owns the conventional right corner. */}
         <button className="help-btn modal-help-btn" type="button" aria-label="How to play" onClick={onHelp}>
           ?
+        </button>
+
+        {/* Dismisses to the finished board; "See result" brings it back. */}
+        <button className="help-btn modal-close-btn" type="button" aria-label="Close" onClick={onClose}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
         </button>
 
         {/* Same sticky-footer discipline as the help modal: the result scrolls,

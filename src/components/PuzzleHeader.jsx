@@ -21,7 +21,14 @@ export function PuzzleHeader({ start, end, par, movesUsed, moveCap, leapsRemaini
 
   return (
     <div className="header">
-      <ThemeToggle />
+      {/* Source order matches the visual columns (help left, theme right) so the
+          grid places all three in one row and tab order runs left-to-right. Help
+          lives here rather than in the topbar for two reasons: it sits beside the
+          very terms it explains, and the topbar is display:none at .vp-tiny —
+          which hid help exactly when the keyboard was up. */}
+      <button className="help-btn" type="button" aria-label="How to play" onClick={onHelp}>
+        ?
+      </button>
 
       <div className="header-main">
         <div className="header-words">
@@ -42,12 +49,7 @@ export function PuzzleHeader({ start, end, par, movesUsed, moveCap, leapsRemaini
         </div>
       </div>
 
-      {/* Lives here rather than in the topbar for two reasons: it sits beside
-          the very terms it explains, and the topbar is display:none at
-          .vp-tiny — which hid help exactly when the keyboard was up. */}
-      <button className="help-btn" type="button" aria-label="How to play" onClick={onHelp}>
-        ?
-      </button>
+      <ThemeToggle />
     </div>
   )
 }
