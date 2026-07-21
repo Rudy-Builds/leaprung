@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { LeapwordGame } from './components/LeapwordGame.jsx'
+import { ArchivePage } from './components/ArchivePage.jsx'
 import { puzzleForDay, EPOCH_ISO } from './game/daily.js'
 import { WORD_LEN } from './game/puzzle.js'
 import { useDayNumber } from './state/useDayNumber.js'
@@ -35,13 +36,13 @@ function Boot() {
   const [assets, setAssets] = useState(null)
   const [error, setError] = useState(null)
   const today = useDayNumber()
-  const { requestedDay, navigate } = useRoute()
+  const { route, navigate } = useRoute()
 
   // A shared "/N" link can name a puzzle that isn't the visitor's today. A future
   // number — a timezone-skewed share from someone a day ahead (see daily.js) —
   // isn't playable early: fall back to today and rewrite the misleading URL to
   // "/" (replace, so it leaves no Back entry). Past and today are handled below.
-  const isFuture = requestedDay != null && requestedDay > today
+  const isFuture = route.view === 'day' && route.day > today
   useEffect(() => {
     if (isFuture) navigate('/', { replace: true })
   }, [isFuture, navigate])
@@ -70,12 +71,25 @@ function Boot() {
   if (error) return <div className="boot">Failed to load: {error}</div>
   if (!assets) return <div className="boot">Loading…</div>
 
+  // The past-puzzles index. A full view in place of the game — its own back
+  // button returns to today.
+  if (route.view === 'archive') {
+    return (
+      <ArchivePage
+        today={today}
+        schedule={assets.schedule}
+        onOpen={(n) => navigate(`/${n}`)}
+        onClose={() => navigate('/')}
+      />
+    )
+  }
+
   // A past number is an archive/challenge play — the exact puzzle a link named,
   // shown off-cycle. Today (or no request, or the future fallback above) is the
   // real daily. `number` drives what's shown and shared; `isArchive` decides
   // whether it counts toward the streak (LeapwordGame turns persistence off).
-  const isArchive = requestedDay != null && requestedDay < today
-  const number = isArchive ? requestedDay : today
+  const isArchive = route.view === 'day' && route.day < today
+  const number = isArchive ? route.day : today
 
   // key={number} remounts when the puzzle changes — at midnight (daily rolls
   // forward) and when navigating between an archive puzzle and today. That's what
@@ -88,6 +102,7 @@ function Boot() {
       isArchive={isArchive}
       today={today}
       onPlayToday={() => navigate('/')}
+      onOpenArchive={() => navigate('/archive')}
       puzzle={puzzleForDay(number, assets.schedule)}
       dictSet={assets.dictSet}
       synMap={assets.synMap}

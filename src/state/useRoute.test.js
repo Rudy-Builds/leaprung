@@ -1,7 +1,7 @@
 // node --test src/**/*.test.js
 import assert from 'node:assert/strict'
 import { test, describe } from 'node:test'
-import { dayFromPath } from './useRoute.js'
+import { dayFromPath, parseRoute } from './useRoute.js'
 
 describe('dayFromPath', () => {
   test('the root is no request — show today', () => {
@@ -26,5 +26,21 @@ describe('dayFromPath', () => {
 
   test('zero is not a valid puzzle', () => {
     assert.equal(dayFromPath('/0'), null)
+  })
+})
+
+describe('parseRoute', () => {
+  test('/archive is the archive index', () => {
+    assert.deepEqual(parseRoute('/archive'), { view: 'archive' })
+    assert.deepEqual(parseRoute('/archive/'), { view: 'archive' })
+  })
+
+  test('a number is a specific puzzle', () => {
+    assert.deepEqual(parseRoute('/5'), { view: 'day', day: 5 })
+  })
+
+  test('root and junk are today', () => {
+    assert.deepEqual(parseRoute('/'), { view: 'today' })
+    assert.deepEqual(parseRoute('/nope'), { view: 'today' })
   })
 })

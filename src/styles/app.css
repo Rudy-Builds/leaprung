@@ -102,6 +102,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative; /* anchors the archive button at the right edge */
 }
 .brand {
   font-size: 26px;
@@ -202,6 +203,16 @@ html, body {
    than .help-btn, so these column/justify values win the equal-specificity tie. */
 .theme-btn { grid-column: 1; justify-self: start; }
 .theme-btn svg { width: 18px; height: 18px; display: block; }
+/* Same round chrome as the header icons, parked at the topbar's right edge so the
+   centred brand is undisturbed. After .help-btn in the file, so its position wins
+   the equal-specificity tie over .help-btn's `position: relative`. */
+.archive-btn {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+}
+.archive-btn svg { width: 18px; height: 18px; display: block; }
 /* Fluid, unlike the original fixed 26px: these now share the row with the help
    button, so at 375px a fixed tile overflows the middle column. Upper bound is
    the original size, so a full-width column looks exactly as it did. */
@@ -560,6 +571,30 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  /* Cap to the screen so both modals scroll their body rather than pushing their
+     primary action off-screen. On a short viewport — or an in-app browser eating
+     height — the dismiss/Share button is the one control that carries the game
+     forward, so it must never fall below the fold. Each modal supplies its own
+     scroll region (.help-body / .modal-body) and pins its footer. */
+  max-height: 100%;
+}
+/* The scroll region + pinned footer shared shape (result modal; help mirrors it
+   with .help-body and its trailing button). min-height:0 is what lets the body
+   shrink below its content and actually scroll inside a flex column. */
+.modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.modal-actions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 /* Absolute rather than in the flex flow: the title is centred, and a button in
    the column would either push it down or fight it for the row. .help-btn's
@@ -614,6 +649,22 @@ html, body {
    the visitor to their real daily, so it takes the in-game --accent. */
 .play-today-btn { background: var(--accent); }
 
+/* The "what next" nudge under the countdown — a quiet text link, deliberately not
+   a button, so it never pulls focus from Share. The archive's real home is the
+   header icon; this only catches the post-game moment. */
+.archive-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin-top: -4px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  cursor: pointer;
+}
+.archive-link:hover { color: var(--accent); }
+
 /* Only rendered when both the native share sheet and the clipboard are
    unavailable — notably any insecure context, e.g. http://<lan-ip>:5173 while
    testing on a phone. Pre-selected so it's one long-press to copy. */
@@ -638,8 +689,24 @@ html, body {
 }
 
 /* ---------- Help ---------- */
+/* The tallest modal — the sticky-footer treatment (see .modal) matters most
+   here, where "Got it" is the first-timer's one way into the game. Title and CTA
+   are the pinned rails; .help-body scrolls between them. */
 .help { text-align: left; gap: 16px; }
-.help-body { display: flex; flex-direction: column; gap: 14px; font-size: 14px; line-height: 1.5; color: var(--muted); }
+.help > .modal-title,
+.help > .submit { flex: 0 0 auto; } /* pinned rails — never let the title or CTA compress */
+.help-body {
+  flex: 1 1 auto;
+  min-height: 0; /* lets this flex child shrink below its content, which is what enables the scroll */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--muted);
+}
 .help-body p { margin: 0; }
 .help-example {
   display: flex;
@@ -669,3 +736,78 @@ html, body {
    than a fifth rule of the game. */
 .help-feedback { border-top: 1px solid var(--line); padding-top: 14px; font-size: 13px; }
 .help-feedback a { color: var(--accent); }
+
+/* ---------- Archive page ---------- */
+/* A full view in place of .game (Boot swaps them), so it mirrors .game's column:
+   same width and --app-h height cap. The LIST is the scroll surface — body has
+   overflow:hidden — with the header pinned above it. */
+.archive {
+  --gutter: max(16px, env(safe-area-inset-left), env(safe-area-inset-right));
+  width: 100%;
+  max-width: 460px;
+  height: var(--app-h, 100dvh);
+  max-height: min(var(--app-h, 100dvh), 820px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: max(8px, env(safe-area-inset-top)) var(--gutter) 0;
+}
+.archive-top {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 6px;
+}
+.archive-title { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 0.5px; }
+.archive-empty {
+  flex: 1 1 auto;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.5;
+  padding: 0 24px;
+}
+.archive-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  margin: 0;
+  padding: 0 0 max(16px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.archive-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.archive-row:hover { border-color: var(--accent); }
+.archive-n {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.archive-words { font-weight: 700; letter-spacing: 0.5px; min-width: 0; }
+.archive-arrow { color: var(--muted); font-weight: 400; margin: 0 2px; }
+.archive-pips { display: inline-flex; gap: 2px; justify-self: end; }
+.archive-pips .pip { color: var(--line); font-size: 13px; }
+.archive-pips .pip.on { color: var(--changed); }
+.archive-play { justify-self: end; color: var(--accent); font-size: 13px; font-weight: 700; }

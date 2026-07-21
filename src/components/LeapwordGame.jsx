@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useGame } from '../state/useGame.js'
 import { useStreak } from '../state/useStreak.js'
-import { hasSeenHelp, markHelpSeen } from '../state/storage.js'
+import { hasSeenHelp, markHelpSeen, recordCompletion } from '../state/storage.js'
 import { PuzzleHeader } from './PuzzleHeader.jsx'
 import { WordChain } from './WordChain.jsx'
 import { ActiveWordTiles } from './ActiveWordTiles.jsx'
@@ -9,7 +9,7 @@ import { LeapPanel } from './LeapPanel.jsx'
 import { ResultModal } from './ResultModal.jsx'
 import { HelpModal } from './HelpModal.jsx'
 
-export function LeapwordGame({ puzzle, dictSet, synMap, number, isArchive = false, today, onPlayToday }) {
+export function LeapwordGame({ puzzle, dictSet, synMap, number, isArchive = false, today, onPlayToday, onOpenArchive }) {
   // Archive/challenge plays are ephemeral and off the streak: a null dayNumber
   // turns off both the day-scoped progress save (a refresh just restarts it,
   // harmless off-cycle) and the streak recording, while `number` still drives the
@@ -18,6 +18,16 @@ export function LeapwordGame({ puzzle, dictSet, synMap, number, isArchive = fals
   const game = useGame(puzzle, dictSet, synMap, { dayNumber: storeDay })
   // Reads the streak once on mount and records the result when a daily game ends.
   const streak = useStreak(storeDay, game.status)
+
+  // Record the result to the completion log the moment a game ends — daily OR
+  // archive, since both complete a puzzle (only the daily also feeds the streak).
+  // Idempotent: recordCompletion keeps the best star, so a refresh or a replay of
+  // an archive puzzle is safe to re-fire.
+  useEffect(() => {
+    if (game.status === 'won' || game.status === 'lost') {
+      recordCompletion(number, game.stars ?? 0)
+    }
+  }, [game.status, game.stars, number])
   // The rules used to be opt-in behind a button no first-timer had a reason to
   // press. Lazy initialiser: hasSeenHelp touches localStorage, so it must not
   // run on every render. This component is keyed by day and remounts at
@@ -40,6 +50,22 @@ export function LeapwordGame({ puzzle, dictSet, synMap, number, isArchive = fals
           <h1 className="brand">
             Leapword <span className="brand-sub">daily word ladder</span>
           </h1>
+          {/* Persistent, always-reachable entry to the archive — its proper home,
+              not the once-a-day result modal (which only nudges toward it). Sits
+              in the topbar's spare right edge; hidden with the topbar when the
+              keyboard is up (.vp-tiny), which is fine — you don't browse mid-move. */}
+          <button
+            className="help-btn archive-btn"
+            type="button"
+            aria-label="Past puzzles"
+            title="Past puzzles"
+            onClick={onOpenArchive}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="3" y="4" width="18" height="17" rx="2" />
+              <path d="M3 9h18M8 2v4M16 2v4" />
+            </svg>
+          </button>
         </header>
 
         {/* Off-cycle play arrived via a shared "/N" link. Name it as a past
@@ -100,6 +126,7 @@ export function LeapwordGame({ puzzle, dictSet, synMap, number, isArchive = fals
           isArchive={isArchive}
           today={today}
           onPlayToday={onPlayToday}
+          onOpenArchive={onOpenArchive}
           onHelp={() => setHelpOpen(true)}
         />
       )}

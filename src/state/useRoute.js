@@ -14,6 +14,17 @@ export function dayFromPath(pathname) {
 }
 
 /**
+ * The whole route in one value, so Boot switches on `view` rather than juggling
+ * flags: '/archive' -> the archive index, '/N' -> a specific puzzle (today's
+ * daily or a past one, decided against today), anything else -> today.
+ */
+export function parseRoute(pathname) {
+  if (pathname === '/archive' || pathname === '/archive/') return { view: 'archive' }
+  const day = dayFromPath(pathname)
+  return day == null ? { view: 'today' } : { view: 'day', day }
+}
+
+/**
  * Minimal path routing over the History API — enough for "/N deep-links to a
  * puzzle" and nothing more. `not_found_handling: single-page-application`
  * (wrangler.jsonc) serves index.html for any path, so the server never 404s on
@@ -40,5 +51,5 @@ export function useRoute() {
     setPathname(path)
   }, [])
 
-  return { requestedDay: dayFromPath(pathname), navigate }
+  return { route: parseRoute(pathname), navigate }
 }

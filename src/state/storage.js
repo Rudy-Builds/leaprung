@@ -10,6 +10,7 @@
 // cheating costs you a star nobody is checking.
 
 import { DEFAULT_STREAK, nextStreak } from '../game/streak.js'
+import { mergeCompletion } from '../game/completions.js'
 
 const KEY = 'leapword:v1:progress'
 // Its own key, not a field on the progress payload: that one is day-scoped and
@@ -20,6 +21,10 @@ const HELP_SEEN_KEY = 'leapword:v1:help-seen'
 // progress payload, which is wiped every midnight. A streak stored there would
 // reset to zero every night — the exact bug this key exists to avoid.
 const STREAK_KEY = 'leapword:v1:streak'
+// The completion log the archive reads: puzzle number -> best stars. Also its own
+// key (persists across days), and separate from the streak — an archive solve
+// completes a puzzle without touching the daily streak.
+const COMPLETIONS_KEY = 'leapword:v1:completions'
 // The theme *preference*: 'light' or 'dark' when the player has overridden, or
 // absent to follow the device. Kept in sync with the pre-paint script in
 // index.html, which reads this same key before React loads.
@@ -123,6 +128,46 @@ export function recordDailyResult(day, won) {
     localStorage.setItem(STREAK_KEY, JSON.stringify(next))
   } catch {
     // In-memory for the session; degrades like every other write in this module.
+  }
+  return next
+}
+
+// Drop any entry that isn't a positive integer key mapping to a 0-3 star value —
+// a poisoned log would render as garbage rows in the archive.
+function sanitizeCompletions(raw) {
+  if (!raw || typeof raw !== 'object') return {}
+  const out = {}
+  for (const [k, v] of Object.entries(raw)) {
+    const n = Number(k)
+    const s = Number(v)
+    if (Number.isInteger(n) && n > 0 && Number.isInteger(s) && s >= 0 && s <= 3) out[n] = s
+  }
+  return out
+}
+
+/** The completion log ({ [puzzleNumber]: bestStars }), or empty if never played. */
+export function loadCompletions() {
+  try {
+    const raw = localStorage.getItem(COMPLETIONS_KEY)
+    return sanitizeCompletions(raw ? JSON.parse(raw) : null)
+  } catch {
+    return {}
+  }
+}
+
+/**
+ * Fold a finished puzzle's result into the log, keeping the best star. Idempotent
+ * — a result that doesn't beat the stored one writes nothing. Records both daily
+ * and archive finishes; only the daily also touches the streak.
+ */
+export function recordCompletion(number, stars) {
+  const prev = loadCompletions()
+  const next = mergeCompletion(prev, number, stars)
+  if (next === prev) return prev // no improvement — nothing to write
+  try {
+    localStorage.setItem(COMPLETIONS_KEY, JSON.stringify(next))
+  } catch {
+    // In-memory for the session; degrades like every other write here.
   }
   return next
 }
