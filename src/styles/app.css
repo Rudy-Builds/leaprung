@@ -728,6 +728,12 @@ html, body {
   min-height: 0; /* lets this flex child shrink below its content, which is what enables the scroll */
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* The scrollbar draws at this box's right edge and would sit on top of the
+     text (iOS overlay scrollbars ignore scrollbar-gutter, so a real gutter is
+     the only fix). Push the scrollbar out into the modal's 24px right padding
+     with an equal negative margin + padding, so the text itself doesn't move. */
+  margin-right: -12px;
+  padding-right: 12px;
   display: flex;
   flex-direction: column;
   gap: 14px;
