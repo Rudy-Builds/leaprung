@@ -21,4 +21,12 @@ const validateSvgAssets = () => ({
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(), cloudflare(), validateSvgAssets()],
+  // Vite doesn't read $PORT on its own. Honour it when the environment assigns
+  // one — e.g. the preview harness picks a free port when another dev server
+  // already holds the default 5173. Unset for a normal `npm run dev`, so this is
+  // `undefined` and Vite falls back to its own default. strictPort so a taken
+  // assigned port fails loudly instead of drifting to one the harness won't find.
+  server: process.env.PORT
+    ? { port: Number(process.env.PORT), strictPort: true }
+    : undefined,
 })
