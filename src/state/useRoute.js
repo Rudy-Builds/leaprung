@@ -15,11 +15,14 @@ export function dayFromPath(pathname) {
 
 /**
  * The whole route in one value, so Boot switches on `view` rather than juggling
- * flags: '/archive' -> the archive index, '/N' -> a specific puzzle (today's
- * daily or a past one, decided against today), anything else -> today.
+ * flags: '/archive' -> the archive index, '/privacy' & '/terms' -> the legal
+ * pages, '/N' -> a specific puzzle (today's daily or a past one, decided against
+ * today), anything else -> today.
  */
 export function parseRoute(pathname) {
   if (pathname === '/archive' || pathname === '/archive/') return { view: 'archive' }
+  if (pathname === '/privacy' || pathname === '/privacy/') return { view: 'privacy' }
+  if (pathname === '/terms' || pathname === '/terms/') return { view: 'terms' }
   const day = dayFromPath(pathname)
   return day == null ? { view: 'today' } : { view: 'day', day }
 }

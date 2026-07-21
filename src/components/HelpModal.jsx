@@ -100,6 +100,17 @@ export function HelpModal({ par, moveCap, onClose }) {
             Hope you enjoyed it! Any feedback? Just email me at{' '}
             <a href="mailto:rudybuilds@pm.me">rudybuilds@pm.me</a>
           </p>
+
+          {/* The site's only always-reachable home for the legal pages — the
+              game board itself is a full-viewport, keyboard-aware layout with no
+              room for a standing footer, and Help opens for every new player.
+              Plain anchors: a full nav to a rarely-visited page is fine, and it
+              keeps this leaf component from needing the router threaded in. */}
+          <p className="help-links">
+            <a href="/privacy">Privacy</a>
+            <span aria-hidden="true"> · </span>
+            <a href="/terms">Terms</a>
+          </p>
         </div>
 
         <button className="submit" type="button" onClick={onClose}>

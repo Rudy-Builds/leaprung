@@ -770,6 +770,12 @@ html, body {
    than a fifth rule of the game. */
 .help-feedback { border-top: 1px solid var(--line); padding-top: 14px; font-size: 13px; }
 .help-feedback a { color: var(--accent); }
+/* The legal links, quieter than the feedback line above them — this is the
+   footer the game board has no room for. Muted so they read as fine print, not
+   a fourth call to action. */
+.help-links { margin: 0; font-size: 12px; text-align: center; color: var(--muted); }
+.help-links a { color: var(--muted); }
+.help-links a:hover { color: var(--accent); }
 
 /* ---------- Archive page ---------- */
 /* A full view in place of .game (Boot swaps them), so it mirrors .game's column:
@@ -845,3 +851,59 @@ html, body {
 .archive-pips .pip { color: var(--line); font-size: 13px; }
 .archive-pips .pip.on { color: var(--changed); }
 .archive-play { justify-self: end; color: var(--accent); font-size: 13px; font-weight: 700; }
+
+/* ---------- Legal pages (Privacy / Terms) ---------- */
+/* Another full view swapped in for .game, same as .archive: the pinned header
+   carries the back button, and the BODY is the sole scroll surface. Slightly
+   wider than the game column — prose wants a longer measure than a word ladder. */
+.legal {
+  --gutter: max(16px, env(safe-area-inset-left), env(safe-area-inset-right));
+  width: 100%;
+  max-width: 560px;
+  height: var(--app-h, 100dvh);
+  max-height: min(var(--app-h, 100dvh), 820px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: max(8px, env(safe-area-inset-top)) var(--gutter) 0;
+}
+.legal-top {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 6px;
+}
+.legal-title { margin: 0; font-size: 22px; font-weight: 800; letter-spacing: 0.5px; }
+.legal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+.legal-body h2 { color: var(--ink); font-size: 15px; margin: 22px 0 6px; }
+.legal-body p { margin: 0 0 12px; }
+.legal-body a { color: var(--accent); }
+/* The dateline sits just under the title as its own quiet stamp. */
+.legal-updated {
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+}
+/* Cross-links to the sibling page and back to the game — a hairline sets them
+   off as the page's own footer, echoing .help-feedback / .modal-reveal. */
+.legal-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 14px;
+  font-weight: 600;
+}

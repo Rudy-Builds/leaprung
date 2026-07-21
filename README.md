@@ -69,8 +69,8 @@ described in the design doc.
 
 ## License
 
-Copyright (C) 2026 Rudy-Builds.
+Copyright (C) 2026 Rudy-Builds. All rights reserved.
 
-Licensed under the **GNU Affero General Public License v3.0 or later** — see [LICENSE](LICENSE).
-In short: you're free to use, modify and share this, but if you run a modified version as a
-network service, you must make your source available under the same terms.
+Proprietary — see [LICENSE](LICENSE). This source is not open source: it may not be copied,
+modified, distributed, or used to run a competing service without the copyright holder's
+written permission. The name "Leapword," its logo, and its visual identity are reserved.

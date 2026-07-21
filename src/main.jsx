@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { LeapwordGame } from './components/LeapwordGame.jsx'
 import { ArchivePage } from './components/ArchivePage.jsx'
+import { LegalPage } from './components/LegalPage.jsx'
 import { puzzleForDay, EPOCH_ISO } from './game/daily.js'
 import { WORD_LEN } from './game/puzzle.js'
 import { useDayNumber } from './state/useDayNumber.js'
@@ -67,6 +68,14 @@ function Boot() {
       })
       .catch((e) => setError(String(e)))
   }, [])
+
+  // Static content pages, resolved before the asset gate: they need neither the
+  // dictionary nor the schedule, so they open instantly and stay reachable even
+  // if the game's data fetch is failing. Placed after every hook above so the
+  // hook order never changes between a legal route and a game route.
+  if (route.view === 'privacy' || route.view === 'terms') {
+    return <LegalPage kind={route.view} onHome={() => navigate('/')} onNavigate={navigate} />
+  }
 
   if (error) return <div className="boot">Failed to load: {error}</div>
   if (!assets) return <div className="boot">Loading…</div>
