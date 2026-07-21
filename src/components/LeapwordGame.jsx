@@ -153,7 +153,6 @@ export function LeapwordGame({ puzzle, dictSet, synMap, number, isArchive = fals
         <HelpModal
           par={puzzle.par}
           moveCap={game.moveCap}
-          leaps={puzzle.leaps}
           onClose={closeHelp}
         />
       )}

@@ -84,11 +84,12 @@ export function WordChain({ path, end }) {
         {path.map((word, i) => {
           const prev = i > 0 ? path[i - 1] : null
           const leap = prev && !isOneLetterDiff(prev, word)
+          const isStart = i === 0
           const isCurrent = i === path.length - 1
           const isEnd = word === end
           return (
             <li
-              className={`chain-row ${isCurrent ? 'current' : ''} ${isEnd ? 'won' : ''}`}
+              className={`chain-row ${isStart ? 'start' : ''} ${isCurrent ? 'current' : ''} ${isEnd ? 'won' : ''}`}
               key={`${word}-${i}`}
             >
               {leap && <span className="leap-mark" title="leap">⤳</span>}

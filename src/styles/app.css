@@ -308,6 +308,11 @@ html, body {
   border-color: var(--win);
   background: color-mix(in srgb, var(--win) 22%, var(--panel));
 }
+/* The first row is the given start word, not a move — a strong neutral frame
+   (near-black in light, near-white in dark) sets it apart so nobody counts it
+   as a step. Placed after .current so it wins on the opening render, when the
+   start row is also the current row. */
+.chain-row.start .tile.small { border-color: var(--ink); }
 .chain-tiles { display: flex; gap: 5px; }
 .leap-mark { color: var(--leap); font-size: 18px; width: 18px; }
 

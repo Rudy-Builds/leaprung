@@ -11,7 +11,7 @@ function changedIndex(prev, word) {
   return -1
 }
 
-export function HelpModal({ par, moveCap, leaps, onClose }) {
+export function HelpModal({ par, moveCap, onClose }) {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div
@@ -57,7 +57,7 @@ export function HelpModal({ par, moveCap, leaps, onClose }) {
             <div className="help-term">
               <dt>Moves</dt>
               <dd>
-                You get {moveCap} — par plus four. Run out and the puzzle locks.
+                You get {moveCap}: par plus four. Run out and the puzzle locks.
               </dd>
             </div>
             {/* Nowhere else does the game say this, and it's the rule people
@@ -73,8 +73,8 @@ export function HelpModal({ par, moveCap, leaps, onClose }) {
             <div className="help-term">
               <dt>Leaps ⤳</dt>
               <dd>
-                Jump straight to a <b>synonym</b> instead of changing a letter. You get{' '}
-                {leaps}. A leap costs a move and a star.
+                Jump straight to a <b>synonym</b> of your current word instead of
+                changing a letter. A leap costs a move and a star.
               </dd>
             </div>
           </dl>
