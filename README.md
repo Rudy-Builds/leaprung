@@ -69,8 +69,8 @@ described in the design doc.
 
 ## License
 
-Copyright (C) 2026 Rudy-Builds. All rights reserved.
+Copyright (c) 2026 Rudy-Builds.
 
-Proprietary — see [LICENSE](LICENSE). This source is not open source: it may not be copied,
-modified, distributed, or used to run a competing service without the copyright holder's
-written permission. The name "Leapword," its logo, and its visual identity are reserved.
+Licensed under the **MIT License** — see [LICENSE](LICENSE). You're free to use, copy,
+modify, and distribute this, with attribution. The name "Leapword," its logo, and its
+visual identity are not covered by the license and remain the creator's.

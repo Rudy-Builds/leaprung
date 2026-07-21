@@ -82,10 +82,10 @@ function TermsBody() {
 
       <h2>Intellectual property</h2>
       <p>
-        Leapword — including its code, design, name, and logo — is the property of its
-        creator and is protected by copyright. You may play the game, but you may not
-        copy, modify, or redistribute it, or use it to run a competing service, without
-        written permission.
+        Leapword’s source code is open source, licensed under the MIT License (see the
+        LICENSE file in the public repository). The name “Leapword,” its logo, and its
+        visual identity are not covered by that license and remain the property of the
+        creator.
       </p>
 
       <h2>Governing law</h2>
