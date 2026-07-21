@@ -28,11 +28,16 @@ export function ActiveWordTiles({ current, onSubmit, onEdit, message }) {
   }, [current])
 
   // A rejected word stays in the tiles so a one-letter typo can be fixed in
-  // place — but the draft is at maxLength, so without selecting it the next
-  // keystroke is silently swallowed and you have to backspace the whole word
-  // first. Selecting means typing replaces it and backspace still edits it.
+  // place. Keep the caret at the end (rather than selecting the whole draft) so
+  // backspace deletes one letter at a time — the player nibbles the mistake off
+  // instead of losing the whole word to a single keystroke.
   useEffect(() => {
-    if (message) inputRef.current?.select()
+    if (!message) return
+    const el = inputRef.current
+    if (!el) return
+    el.focus({ preventScroll: true })
+    const end = el.value.length
+    el.setSelectionRange(end, end)
   }, [message])
 
   const handleChange = (e) => {
