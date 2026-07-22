@@ -1,9 +1,16 @@
 // node --test src/game/
 import assert from 'node:assert/strict'
 import { test, describe } from 'node:test'
-import { SHARE_URL, buildShareText, buildTileRow, puzzleUrl } from './share.js'
+import { decodeChallenge } from './challenge.js'
+import { SHARE_URL, buildShareText, buildTileRow, challengeUrl, puzzleUrl } from './share.js'
 
 const KIND_GIVE = ['KIND', 'FIND', 'FINE', 'FIVE', 'GIVE']
+
+// The card minus its sealed challenge code — what a recipient can actually READ
+// in a chat. The spoiler tests assert against this: the code is the player's own
+// path by design (see challenge.js), not a leak, and base64 can coincidentally
+// contain word-shaped substrings.
+const readable = (card) => card.replace(/\?c=[A-Za-z0-9_-]+/, '')
 
 describe('buildTileRow', () => {
   test('one tile per move, not per word', () => {
@@ -33,19 +40,15 @@ describe('buildShareText', () => {
   test('3 stars, par, no leaps', () => {
     assert.equal(
       buildShareText({ ...base, stars: 3, status: 'won' }),
-      `Leapword #42 ⭐⭐⭐\nKIND → GIVE in 4 · par 4\n🟩🟩🟩🟩\n${SHARE_URL}/42`,
+      `Leapword #42 ⭐⭐⭐\nKIND → GIVE in 4 · par 4\n🟩🟩🟩🟩\n${challengeUrl(42, KIND_GIVE)}`,
     )
   })
 
   test('2 stars, one over par with a leap', () => {
+    const path = ['KIND', 'FIND', 'FINE', 'MINE', 'GIVE', 'GIVE']
     assert.equal(
-      buildShareText({
-        ...base,
-        stars: 2,
-        status: 'won',
-        path: ['KIND', 'FIND', 'FINE', 'MINE', 'GIVE', 'GIVE'],
-      }),
-      `Leapword #42 ⭐⭐\nKIND → GIVE in 5 · par 4\n🟩🟩🟩🟪🟪\n${SHARE_URL}/42`,
+      buildShareText({ ...base, stars: 2, status: 'won', path }),
+      `Leapword #42 ⭐⭐\nKIND → GIVE in 5 · par 4\n🟩🟩🟩🟪🟪\n${challengeUrl(42, path)}`,
     )
   })
 
@@ -64,14 +67,33 @@ describe('buildShareText', () => {
     for (const status of ['won', 'lost']) {
       const lines = buildShareText({ ...base, stars: 2, status }).split('\n')
       assert.equal(lines.length, 4)
-      assert.equal(lines[3], puzzleUrl(42))
-      assert.equal(lines[3], `${SHARE_URL}/42`)
+      assert.ok(lines[3].startsWith(`${SHARE_URL}/42`), lines[3])
     }
+  })
+
+  test('a win links as a challenge; a loss links plain — no move count to beat', () => {
+    const won = buildShareText({ ...base, stars: 3, status: 'won' }).split('\n')[3]
+    assert.equal(won, challengeUrl(42, KIND_GIVE))
+    assert.match(won, /\?c=[A-Za-z0-9_-]+$/)
+
+    const lost = buildShareText({ ...base, stars: 0, status: 'lost' }).split('\n')[3]
+    assert.equal(lost, puzzleUrl(42))
+    assert.doesNotMatch(lost, /\?c=/)
+  })
+
+  test('the challenge code round-trips to the very path that was shared', () => {
+    const out = buildShareText({ ...base, stars: 3, status: 'won' })
+    const code = /\?c=([A-Za-z0-9_-]+)/.exec(out)[1]
+    const decoded = decodeChallenge(code, {
+      puzzle: { start: 'KIND', end: 'GIVE', par: 4, leaps: 2 },
+      dictSet: new Set(KIND_GIVE),
+    })
+    assert.deepEqual(decoded?.path, KIND_GIVE)
   })
 
   test('the link points at the shared puzzle, not the homepage', () => {
     const out = buildShareText({ ...base, number: 137, stars: 3, status: 'won' })
-    assert.equal(out.split('\n')[3], `${SHARE_URL}/137`)
+    assert.ok(out.split('\n')[3].startsWith(`${SHARE_URL}/137?c=`))
   })
 
   test('a win rides the streak on line 1, still four lines', () => {
@@ -100,15 +122,17 @@ describe('spoiler guard', () => {
     const solution = ['STOP', 'SHOP', 'SHIP', 'SHIT', 'SUIT', 'QUIT']
     const playerPath = ['STOP', 'SLOP', 'SLIP', 'SLIT', 'SUIT', 'QUIT']
 
-    const out = buildShareText({
-      number: 12,
-      start: 'STOP',
-      end: 'QUIT',
-      par: 5,
-      path: playerPath,
-      stars: 3,
-      status: 'won',
-    })
+    const out = readable(
+      buildShareText({
+        number: 12,
+        start: 'STOP',
+        end: 'QUIT',
+        par: 5,
+        path: playerPath,
+        stars: 3,
+        status: 'won',
+      }),
+    )
 
     for (const word of solution.slice(1, -1)) {
       if (playerPath.includes(word)) continue
@@ -117,7 +141,7 @@ describe('spoiler guard', () => {
     assert.ok(!out.includes('SHIT'))
   })
 
-  test('does not print the player’s own interiors either — only tiles', () => {
+  test('does not print the player’s own interiors either — only tiles and the sealed code', () => {
     const out = buildShareText({
       number: 1,
       start: 'KIND',
@@ -128,7 +152,7 @@ describe('spoiler guard', () => {
       status: 'won',
     })
     for (const interior of KIND_GIVE.slice(1, -1)) {
-      assert.ok(!out.includes(interior), `leaked own interior ${interior}`)
+      assert.ok(!readable(out).includes(interior), `leaked own interior ${interior}`)
     }
   })
 })

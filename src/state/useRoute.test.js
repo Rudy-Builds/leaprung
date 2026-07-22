@@ -1,7 +1,7 @@
 // node --test src/**/*.test.js
 import assert from 'node:assert/strict'
 import { test, describe } from 'node:test'
-import { dayFromPath, parseRoute } from './useRoute.js'
+import { challengeFromSearch, dayFromPath, parseRoute } from './useRoute.js'
 
 describe('dayFromPath', () => {
   test('the root is no request — show today', () => {
@@ -26,6 +26,23 @@ describe('dayFromPath', () => {
 
   test('zero is not a valid puzzle', () => {
     assert.equal(dayFromPath('/0'), null)
+  })
+})
+
+describe('challengeFromSearch', () => {
+  test('a well-formed code is handed through raw', () => {
+    assert.equal(challengeFromSearch('?c=RklORElGSU5F'), 'RklORElGSU5F')
+    assert.equal(challengeFromSearch('?utm_source=x&c=Zm9v'), 'Zm9v')
+  })
+
+  test('missing, empty, or out-of-alphabet codes are no request', () => {
+    assert.equal(challengeFromSearch(''), null)
+    assert.equal(challengeFromSearch('?x=1'), null)
+    assert.equal(challengeFromSearch('?c='), null)
+    // URLSearchParams decodes + to a space, %xx to bytes — both leave the
+    // base64url alphabet and read as junk, not a code.
+    assert.equal(challengeFromSearch('?c=ab+cd'), null)
+    assert.equal(challengeFromSearch('?c=ab%2Fcd'), null)
   })
 })
 

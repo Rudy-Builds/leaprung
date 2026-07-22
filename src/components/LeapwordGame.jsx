@@ -9,7 +9,7 @@ import { LeapPanel } from './LeapPanel.jsx'
 import { ResultModal } from './ResultModal.jsx'
 import { HelpModal } from './HelpModal.jsx'
 
-export function LeapwordGame({ puzzle, dictSet, synMap, number, isArchive = false, today, onPlayToday, onOpenArchive }) {
+export function LeapwordGame({ puzzle, dictSet, synMap, number, isArchive = false, today, onPlayToday, onOpenArchive, challenge = null }) {
   // Archive/challenge plays are ephemeral and off the streak: a null dayNumber
   // turns off both the day-scoped progress save (a refresh just restarts it,
   // harmless off-cycle) and the streak recording, while `number` still drives the
@@ -72,10 +72,27 @@ export function LeapwordGame({ puzzle, dictSet, synMap, number, isArchive = fals
           </button>
         </header>
 
+        {/* A challenge link gets its own bar: the friend's numbers are the
+            reason this visitor is here, so while they play it outranks the
+            archive bar (one bar, not a stack — phone rows are scarce). Numbers
+            only, never words: the path stays sealed until their run ends. */}
+        {playing && challenge && (
+          <div className="archive-bar challenge-bar">
+            <span>
+              🎯 A friend solved #{number} in {challenge.steps}
+              {challenge.leapsUsed > 0 &&
+                ` · ${challenge.leapsUsed} ${challenge.leapsUsed === 1 ? 'leap' : 'leaps'}`}
+              {' · '}
+              {'⭐'.repeat(challenge.stars)} — beat their path
+            </span>
+          </div>
+        )}
+
         {/* Off-cycle play arrived via a shared "/N" link. Name it as a past
             puzzle so the streak's absence isn't a surprise, and give a one-tap
-            way back to today's real daily. */}
-        {isArchive && (
+            way back to today's real daily. Yields to the challenge bar during
+            play; returns once the game ends and the bar's job is done. */}
+        {isArchive && !(playing && challenge) && (
           <div className="archive-bar">
             <span>Leapword #{number} · a past puzzle</span>
             <button type="button" className="archive-today" onClick={onPlayToday}>
@@ -136,6 +153,7 @@ export function LeapwordGame({ puzzle, dictSet, synMap, number, isArchive = fals
           leapsUsed={game.leapsUsed}
           solution={puzzle.solution}
           number={number}
+          challenge={challenge}
           streak={isArchive ? undefined : streak}
           isArchive={isArchive}
           today={today}

@@ -7,11 +7,15 @@
 // away from being interpolated into a string that gets pasted into a group chat.
 // The type signature is the guarantee; a comment saying "don't leak" is not.
 //
-// Everything printed here is already public before you play: the puzzle number,
-// the start and end words (PuzzleHeader shows them), and par (ditto). The tile
-// row adds only your own move count and where you leapt.
+// Everything *readable* here is already public before you play: the puzzle
+// number, the start and end words (PuzzleHeader shows them), and par (ditto).
+// The tile row adds only your own move count and where you leapt. A winning
+// card's URL additionally carries your path SEALED as a challenge code — not
+// readable at a glance, only revealed by the recipient's client after their own
+// run ends. See challenge.js for the seal and its contract.
 
 import { isOneLetterDiff } from './rules.js'
+import { encodeChallenge } from './challenge.js'
 
 export const SHARE_URL = 'https://leapword.app'
 
@@ -19,6 +23,10 @@ export const SHARE_URL = 'https://leapword.app'
 // today's daily anyway; opened later it lands on that specific past puzzle (an
 // archive play) instead of a cold, unrelated homepage — see useRoute + Boot.
 export const puzzleUrl = (number) => `${SHARE_URL}/${number}`
+
+// A win's link carries the ladder as a dare: the recipient sees your numbers up
+// front and your actual words only after they've played — see challenge.js.
+export const challengeUrl = (number, path) => `${puzzleUrl(number)}?c=${encodeChallenge(path)}`
 
 // Real emoji, not the site's ★/⤳/· glyphs. Those are typographically nicer but
 // paste into Slack and iMessage as thin monochrome characters — the colour is
@@ -72,7 +80,12 @@ export function buildShareText({ number, start, end, path, par, stars, status, s
     ? `${start} → ${end} in ${steps} · par ${par}`
     : `${start} → ${end} · par ${par}`
 
-  return [`Leapword #${number} ${score}${flame}`, summary, buildTileRow(path), puzzleUrl(number)].join('\n')
+  // A win links as a challenge (the path rides sealed in the URL — the loop's
+  // whole upgrade from boast to dare). A loss keeps the plain link: there's no
+  // move count to beat, and encodeChallenge assumes a path that reached END.
+  const url = won ? challengeUrl(number, path) : puzzleUrl(number)
+
+  return [`Leapword #${number} ${score}${flame}`, summary, buildTileRow(path), url].join('\n')
 }
 
 /**

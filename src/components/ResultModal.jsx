@@ -1,4 +1,5 @@
 import React from 'react'
+import { compareToChallenge } from '../game/challenge.js'
 import { isOneLetterDiff } from '../game/rules.js'
 import { buildShareText } from '../game/share.js'
 import { Countdown } from './Countdown.jsx'
@@ -21,13 +22,18 @@ function PathLine({ path }) {
   )
 }
 
-export function ResultModal({ status, stars, path, start, end, par, leapsUsed, solution, number, streak = {}, isArchive = false, today, onPlayToday, onOpenArchive, onClose, onHelp }) {
+export function ResultModal({ status, stars, path, start, end, par, leapsUsed, solution, number, challenge = null, streak = {}, isArchive = false, today, onPlayToday, onOpenArchive, onClose, onHelp }) {
   const won = status === 'won'
   const steps = path.length - 1
 
   // Note what is NOT passed: `solution`. buildShareText has no parameter for it,
   // so the par line revealed below cannot reach the clipboard. See share.js.
   const shareable = buildShareText({ number, start, end, path, par, stars, status, streak: streak.current })
+
+  // The run is over, so the seal comes off: this is the only place the friend's
+  // actual words render. Verdict from the player's side — see challenge.js for
+  // the stars → steps → leaps order.
+  const verdict = challenge ? compareToChallenge({ status, stars, steps, leapsUsed }, challenge) : null
 
   return (
     <div className="modal-overlay">
@@ -81,7 +87,46 @@ export function ResultModal({ status, stars, path, start, end, par, leapsUsed, s
             <p className="modal-streak broke">💔 {streak.brokeStreak} day streak ended</p>
           )}
 
-          <PathLine path={path} />
+          {/* The duel's outcome, above the paths it explains. Ties get their own
+              line because "same score, different roads" IS the game's pitch. */}
+          {verdict && (
+            <p className={`modal-verdict ${verdict}`}>
+              {verdict === 'won' && '🏆 You beat their path!'}
+              {verdict === 'tied' && '🤝 Dead even — same score, your own road'}
+              {verdict === 'lost' && '🎯 Their round this time'}
+            </p>
+          )}
+
+          {/* Under a challenge the player's ladder needs a label, because a
+              second ladder is about to appear right below it. */}
+          {challenge ? (
+            <div className="modal-compare-block">
+              <span className="modal-reveal-label">
+                Your path — {steps} {steps === 1 ? 'move' : 'moves'}
+                {leapsUsed > 0 && `, ${leapsUsed} ${leapsUsed === 1 ? 'leap' : 'leaps'}`}
+              </span>
+              <PathLine path={path} />
+            </div>
+          ) : (
+            <PathLine path={path} />
+          )}
+
+          {/* The route-compare payoff: their words, unsealed only now that the
+              player's own run is done. Same visual treatment as the par-line
+              reveal below, tinted leap-purple so "theirs" never reads as "the
+              answer". */}
+          {challenge && (
+            <div className="modal-reveal modal-compare">
+              <span className="modal-reveal-label">
+                Their path — {challenge.steps} {challenge.steps === 1 ? 'move' : 'moves'}
+                {challenge.leapsUsed > 0 &&
+                  `, ${challenge.leapsUsed} ${challenge.leapsUsed === 1 ? 'leap' : 'leaps'}`}
+                {' · '}
+                {'⭐'.repeat(challenge.stars)}
+              </span>
+              <PathLine path={challenge.path} />
+            </div>
+          )}
 
           {/* Losing used to be a dead end: zero stars, no explanation, and a replay
               of the same puzzle. Show the line they were hunting for. */}

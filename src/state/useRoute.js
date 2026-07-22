@@ -28,6 +28,17 @@ export function parseRoute(pathname) {
 }
 
 /**
+ * The challenge code named by the query string: "?c=<base64url>" -> the raw
+ * code, anything else -> null. Character-set checked only — real validation
+ * needs the puzzle and dictionary, which don't exist at route level; see
+ * challenge.js. Exported for its unit test, like dayFromPath above.
+ */
+export function challengeFromSearch(search) {
+  const code = new URLSearchParams(search).get('c')
+  return code && /^[A-Za-z0-9_-]+$/.test(code) ? code : null
+}
+
+/**
  * Minimal path routing over the History API — enough for "/N deep-links to a
  * puzzle" and nothing more. `not_found_handling: single-page-application`
  * (wrangler.jsonc) serves index.html for any path, so the server never 404s on
@@ -38,6 +49,17 @@ export function parseRoute(pathname) {
  */
 export function useRoute() {
   const [pathname, setPathname] = useState(() => window.location.pathname)
+
+  // A challenge is an ENTRY property, not a route property: it's meaningful only
+  // on the "/N?c=..." link someone actually opened, pinned to that N. Captured
+  // once so in-app navigation can't drag it onto other puzzles, and kept when
+  // the visitor wanders off and Back-buttons in again (navigate pushes bare
+  // paths, so the ?c= itself survives only in this state, deliberately).
+  const [challenge] = useState(() => {
+    const day = dayFromPath(window.location.pathname)
+    const code = challengeFromSearch(window.location.search)
+    return day != null && code ? { day, code } : null
+  })
 
   useEffect(() => {
     const onPop = () => setPathname(window.location.pathname)
@@ -54,5 +76,5 @@ export function useRoute() {
     setPathname(path)
   }, [])
 
-  return { route: parseRoute(pathname), navigate }
+  return { route: parseRoute(pathname), navigate, challenge }
 }

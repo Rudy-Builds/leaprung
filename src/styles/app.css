@@ -138,6 +138,12 @@ html, body {
   font-size: 13px;
   color: var(--muted);
 }
+
+/* The challenge bar shares .archive-bar's bones (same slot, same rhythm) but
+   borrows the leap purple and full-strength ink: arriving on a dare should read
+   as an event, where the archive bar is deliberately a murmur. */
+.challenge-bar { border-color: var(--leap); color: var(--ink); }
+
 .archive-today {
   border: 0;
   padding: 0;
@@ -668,6 +674,20 @@ html, body {
   color: var(--muted);
 }
 .modal-reveal .modal-chain { color: var(--win); }
+
+/* The challenge duel. The verdict is one loud line; win takes --win, a loss or
+   tie stays quiet — the sting (or the shrug) shouldn't shout. */
+.modal-verdict { margin: 0; font-size: 14px; font-weight: 700; color: var(--muted); }
+.modal-verdict.won { color: var(--win); }
+
+/* "Your path" block under a challenge: label + chain, no top hairline — it's
+   the modal's main content, not an aside like .modal-reveal. */
+.modal-compare-block { display: flex; flex-direction: column; gap: 8px; }
+
+/* "Their path" reuses .modal-reveal's hairline-aside treatment but tints the
+   chain leap-purple: green is the answer's colour (the par line, the win), and
+   a friend's ladder is neither. */
+.modal-compare .modal-chain { color: var(--leap); }
 
 /* Share is the hero action of the result modal now that "Play again" is gone,
    so it takes --win rather than the --accent used for in-game submits. */

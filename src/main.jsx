@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { LeapwordGame } from './components/LeapwordGame.jsx'
 import { ArchivePage } from './components/ArchivePage.jsx'
 import { LegalPage } from './components/LegalPage.jsx'
+import { decodeChallenge } from './game/challenge.js'
 import { puzzleForDay, EPOCH_ISO } from './game/daily.js'
 import { WORD_LEN } from './game/puzzle.js'
 import { useDayNumber } from './state/useDayNumber.js'
@@ -37,7 +38,7 @@ function Boot() {
   const [assets, setAssets] = useState(null)
   const [error, setError] = useState(null)
   const today = useDayNumber()
-  const { route, navigate } = useRoute()
+  const { route, navigate, challenge: challengeReq } = useRoute()
 
   // A shared "/N" link can name a puzzle that isn't the visitor's today. A future
   // number — a timezone-skewed share from someone a day ahead (see daily.js) —
@@ -99,6 +100,17 @@ function Boot() {
   // whether it counts toward the streak (LeapwordGame turns persistence off).
   const isArchive = route.view === 'day' && route.day < today
   const number = isArchive ? route.day : today
+  const puzzle = puzzleForDay(number, assets.schedule)
+
+  // The challenge applies only while the visitor is on the exact puzzle its link
+  // named (route.day === challengeReq.day covers both an archive #N and a same-day
+  // #N === today; the future-fallback above rewrote away any premature one).
+  // Decoded here, not in useRoute, because validation needs the puzzle and the
+  // dictionary — and an invalid code becomes null, i.e. a plain visit.
+  const challenge =
+    challengeReq && route.view === 'day' && route.day === challengeReq.day
+      ? decodeChallenge(challengeReq.code, { puzzle, dictSet: assets.dictSet })
+      : null
 
   // key={number} remounts when the puzzle changes — at midnight (daily rolls
   // forward) and when navigating between an archive puzzle and today. That's what
@@ -112,9 +124,10 @@ function Boot() {
       today={today}
       onPlayToday={() => navigate('/')}
       onOpenArchive={() => navigate('/archive')}
-      puzzle={puzzleForDay(number, assets.schedule)}
+      puzzle={puzzle}
       dictSet={assets.dictSet}
       synMap={assets.synMap}
+      challenge={challenge}
     />
   )
 }
